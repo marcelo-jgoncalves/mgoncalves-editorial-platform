@@ -95,7 +95,8 @@ Para efeito deste caso, o protocolo é considerado bem-sucedido no Bloco 1 se: (
 | Mudança ou afirmação | Evidência exigida | Evidência obtida | Status |
 |---|---|---|---|
 | `Post` é validado em runtime na leitura, `Autor`/`Categoria` não são | Citação literal de `postPersistence.ts` e de `getAuthor/index.ts:32` | Obtida — citações na seção 2 acima | `satisfied` |
-| Rodada 1 do protocolo (Claude + Codex independentes) produz notas registradas | Arquivos separados de proposta/nota, sem um lado ver o outro antes do registro | pendente — rodada em andamento no momento em que este caso foi aberto | `pending` |
+| Proposta independente de Claude para o Bloco 1 (9 critérios + achados A1-A3 + nota geral) | Documento próprio, sem input do Codex | Obtida — `docs/engineering/reviews/architecture-axis/block-1-modelo-de-dados/round1-claude-proposal.md`, nota 7.6/10 | `satisfied` |
+| Proposta independente do Codex para o Bloco 1 | Documento próprio, sem ver a proposta de Claude antes do registro | **Bloqueada** — `codex exec` retornou `ERROR: You've hit your usage limit [...] try again at Oct 3rd, 2026 3:20 PM` (saída completa em `round1-codex-output-RATE-LIMITED.txt`) | `pending` |
 
 # 7. Participação da IA
 
@@ -117,11 +118,18 @@ Ver seção 2 (`Observed fact` sobre `postPersistence.ts`/`getAuthor/index.ts`).
 
 ## 9.2 Tentativas realizadas
 - Divisão em 7 blocos do eixo Arquitetura (`blocks.md`).
-- Leitura completa do Bloco 1 (9 arquivos, 446 linhas) como proposta independente de Claude, em andamento no momento em que este caso foi registrado.
+- Leitura completa do Bloco 1 (9 arquivos, 446 linhas) como proposta independente de Claude, concluída e registrada (nota 7.6/10).
+- Invocação de `codex exec --skip-git-repo-check` com o prompt da Rodada 1 (escopo do bloco + critérios, sem a proposta de Claude) — rodada em segundo plano.
+
+## 9.3 Comportamento inesperado
+
+`Observed fact`: a primeira tentativa real de invocar o Codex nesta auditoria retornou `ERROR: You've hit your usage limit [...] try again at Oct 3rd, 2026 3:20 PM` (saída completa preservada em `docs/engineering/reviews/architecture-axis/block-1-modelo-de-dados/round1-codex-output-RATE-LIMITED.txt`) — não uma falha de execução (trava/CPU zero, caso coberto por outra regra do protocolo), mas o próprio limite de uso da conta. `CLAUDE.md` §11 (escrito poucas horas antes, no mesmo PR que este caso audita) já previa exatamente este modo de falha ("Rate limit do Codex: não bloquear a sessão esperando [...] reagendar"), mas nunca tinha sido testado contra uma ocorrência real neste repositório.
+
+`AI inference`: a janela de retomada (mais de 24h à frente) está fora do alcance de um reagendamento curto de sessão — a regra como escrita cobre bem o caso de uma espera de minutos/poucas horas, mas não distingue explicitamente esse caso de uma espera de mais de um dia, onde a ação prática correta é relatar o bloqueio ao humano e aguardar decisão, não tentar um mecanismo de wakeup automático. `Open question`: a regra deveria ganhar esse limiar explícito (ex. "> X horas → reportar e parar, não agendar"), ou isso já está implícito em "não bloquear a sessão esperando"?
 
 # 10. Solução final
 
-Pendente — caso ainda ativo, registrado no início do ciclo conforme `capture-protocol.md` §7.1.
+Pendente — caso ainda ativo. O Bloco 1 tem a proposta independente de Claude completa; a rodada do Codex está bloqueada por limite de uso externo até 2026-10-03 15:20, não por uma falha do processo ou do desenho do protocolo em si.
 
 # 11. Evidência de antes e depois
 

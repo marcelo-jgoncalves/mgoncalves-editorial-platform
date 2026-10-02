@@ -1,0 +1,32 @@
+Você é o segundo avaliador independente no protocolo de debate Claude-Codex deste repositório (marcelo-goncalves-blog), definido em CLAUDE.md secao 11. Esta e a Rodada 1: uma auditoria de arquitetura, feita de forma INDEPENDENTE (voce nao viu nenhuma analise do Claude sobre este bloco ainda).
+
+Leia primeiro os criterios de avaliacao do eixo Arquitetura em:
+docs/engineering/standards/joint-review-criteria.md (secao "Eixo: Arquitetura", 9 criterios com peso)
+
+Depois audite o BLOCO 1 do eixo Arquitetura ("Modelo de dados e contratos"), definido em docs/engineering/reviews/architecture-axis/blocks.md. Escopo exato do bloco:
+
+- packages/contracts/src/post.ts
+- packages/contracts/src/autor.ts
+- packages/contracts/src/categoria.ts
+- packages/contracts/src/index.ts
+- backend/src/common/postSchema.ts
+- backend/src/common/dynamodb.ts
+- backend/src/common/postPersistence.ts
+- backend/src/common/postCounters.ts
+- backend/src/common/categorias.ts
+
+Para contexto de como esses contratos sao realmente consumidos (leitura/escrita do DynamoDB), leia tambem:
+- backend/src/functions/getPost/index.ts
+- backend/src/functions/getPosts/index.ts
+- backend/src/functions/adminPosts/index.ts
+- backend/src/functions/adminAuthors/index.ts
+- backend/src/functions/adminCategories/index.ts
+- backend/src/functions/getAuthor/index.ts
+- infra/modules/dynamodb/main.tf (desenho real das 4 tabelas DynamoDB: posts com 5 GSIs, autores, categorias, admin-sessions)
+
+Produza um relatorio com:
+1. Para cada um dos 9 criterios do eixo Arquitetura: nota de 0 a 10 e justificativa curta com evidencia de arquivo:linha (nao impressao geral de qualidade).
+2. Lista de achados concretos (cada um com arquivo:linha, o que esta errado ou inconsistente, e severidade real alta/media/baixa).
+3. Uma nota geral ponderada final de 0 a 10 para o Bloco 1 inteiro, calculada com os pesos do documento de criterios.
+
+Regras: cite sempre arquivo:linha real, nunca invente comportamento sem ter lido o codigo. Se um criterio nao se aplica bem a este bloco especifico (ex. Cost & Resource Governance), diga isso explicitamente em vez de forcar uma nota artificial. Responda em portugues do Brasil.

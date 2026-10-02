@@ -90,7 +90,7 @@ Este caso produz sinal real (e não "teatro de rigor") se, eixo a eixo, pelo men
 |---|---|---|---|
 | Validar os eixos contra a realidade (pesquisa + código), antes de auditar, já produz correção de qualidade na própria régua | 7º eixo adicionado com justificativa rastreável | Obtida — seção 2.0 | `satisfied` |
 | Eixo Arquitetura, critério Data Model & Consistency, produz achado real e correção real | Diff do contrato antes/depois + handlers atualizados | Obtida — seção 11 | `satisfied` |
-| A correção do Bloco 1 não quebrou o comportamento existente | Testes/typecheck/lint do pacote `contracts` e dos handlers afetados | Obtida — ver seção 12 | `pending` |
+| A correção do Bloco 1 não quebrou o comportamento existente | Testes/typecheck/lint do pacote `contracts` e dos handlers afetados | Obtida — commit `ec2098b`: contracts 40/40 testes + typecheck limpo; backend 220/220 testes + lint + typecheck limpo; admin `vue-tsc --build` limpo | `satisfied` |
 | Os outros eixos também produzem achado real comparável | Mesma estrutura de achado+correção para cada eixo | Pendente — eixos ainda não auditados | `pending` |
 
 # 7. Participação da IA
@@ -122,13 +122,13 @@ Este caso produz sinal real (e não "teatro de rigor") se, eixo a eixo, pelo men
 | Antes (eixos) | commit `c6fc78f`^ (antes do 7º eixo) | `docs/engineering/standards/joint-review-criteria.md` |
 | Depois (eixos) | commit `c6fc78f` | mesmo arquivo |
 | Antes (contratos) | commit `9a200d3` | `packages/contracts/src/autor.ts`, `categoria.ts` |
-| Depois (contratos) | a ser commitado nesta sessão | mesmos arquivos + `backend/src/common/{autorPersistence,categoriaPersistence}.ts` novos |
+| Depois (contratos) | commit `ec2098b` | mesmos arquivos + `backend/src/common/{autorPersistence,categoriaPersistence}.ts` novos |
 
 ## Reprodução
 
 ```text
 git diff c6fc78f~1..c6fc78f -- docs/engineering/standards/joint-review-criteria.md
-git diff 9a200d3..<commit-desta-correcao> -- packages/contracts/src/autor.ts packages/contracts/src/categoria.ts
+git diff 9a200d3..ec2098b -- packages/contracts/src/autor.ts packages/contracts/src/categoria.ts
 ```
 
 ## Exemplo representativo 1 — eixo de Privacidade ausente → presente
@@ -151,7 +151,7 @@ Um eixo inteiro, com 4 critérios pesados, passou a existir — não por prefer�
 
 ### Classificação da evidência
 - `Observed fact`: os dois trechos são citações literais do arquivo nas duas versões.
-- `Limitation`: o commit exato "depois do contrato" ainda não existe no momento em que esta seção foi escrita — será atualizado com o hash real, conforme `capture-protocol.md` §11.2.
+- `Observed fact`: commit `ec2098b` (hash real, sem invenção antecipada, conforme `capture-protocol.md` §11.2).
 
 ## Exemplo representativo 2 — `autor.ts`
 
@@ -183,7 +183,7 @@ Os eixos de Qualidade de Engenharia, Engenharia de Contexto, Governança de IA e
 # 15. Limites da conclusão
 
 - Este caso cobre, até o momento, a verificação inicial da régua (§2.0) e 1 de 7 blocos de 1 eixo (§2.1) — não é evidência de que todo eixo produzirá um achado igualmente concreto.
-- A validação de que a correção do Bloco 1 não quebrou nada (testes/typecheck/lint) precisa ser confirmada e registrada com o resultado real antes deste caso poder ser considerado `resolved` para essa parte.
+- A validação da correção do Bloco 1 já foi confirmada (commit `ec2098b`, ver seção 6.3) — mas o caso continua `active`, não `resolved`, porque os outros 6 eixos ainda não foram auditados.
 
 # 16. Questões em aberto
 

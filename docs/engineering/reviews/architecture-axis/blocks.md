@@ -26,7 +26,7 @@ Cada bloco tem sua própria subpasta (`block-N-<nome>/`) com os artefatos de cad
 
 | Bloco | Status | Nota final (Claude / Codex) | Rodadas |
 |---|---|---|---|
-| 1. Modelo de dados e contratos | **bloqueado** — proposta independente de Claude pronta (7.6/10), Codex rate-limited até 2026-10-03 15:20 (ver `block-1-modelo-de-dados/`) | — | 1 (parcial) |
+| 1. Modelo de dados e contratos | **achados óbvios corrigidos (commit `ec2098b`), crítica cruzada do Codex ainda bloqueada** por rate-limit até 2026-10-03 15:20 — achado A2 (GSI sem validação) segue aberto, candidato real à rodada do protocolo quando o Codex liberar (ver `block-1-modelo-de-dados/`) | — | 1 (parcial) |
 | 2. API backend síncrona | pendente | — | — |
 | 3. Pipeline assíncrono/agendado | pendente | — | — |
 | 4. Infraestrutura (Terraform) | pendente | — | — |

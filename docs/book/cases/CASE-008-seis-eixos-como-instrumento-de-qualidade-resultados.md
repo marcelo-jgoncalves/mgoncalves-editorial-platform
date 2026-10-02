@@ -80,9 +80,21 @@ Antes de `joint-review-criteria.md` existir, este projeto não tinha uma lista e
 
 **Achado A3 corrigido, com um resultado colateral não previsto**: `adminPosts/index.ts:179`/`:323` liam o item anterior via `as Post` (não `parsePostItem`) antes de um merge PATCH/delete. `Human decision`: Marcelo pediu explicitamente para corrigir, não documentar como pendência, quando perguntado — "Eu não quero que reverta" — depois de uma primeira tentativa ter sido revertida por quebrar 21 testes. A correção real não foi só trocar o cast: **21 testes de `adminPosts/index.test.ts` mockavam a leitura do item anterior com uma forma deliberadamente mínima (`{ status, e_projeto, version }`) que nunca batia com os campos obrigatórios reais de `postEntitySchema`** — passavam porque nada verificava isso em runtime antes. `AI inference`: isso é evidência de que a ausência de validação na fronteira não é neutra mesmo quando "nada quebra" — ela permite que a suíte de testes se acostume com uma forma de dado que não existe de verdade, até que algo finalmente a force a ser honesta. Corrigido espalhando `SAMPLE_POST` completo em cada fixture, sobrescrevendo só os campos que cada teste realmente exercita. 220/220 testes voltaram a passar depois do ajuste.
 
-## 2.2-2.7 Demais eixos
+## 2.2 Bloco 2 (API backend síncrona) — Arquitetura, Qualidade de Engenharia, Segurança/AppSec
 
-Pendente — preenchido conforme Qualidade de Engenharia, Engenharia de Contexto, Segurança/AppSec, Governança de IA, Conteúdo Editorial e Privacidade forem auditados.
+Marcelo pediu para submeter cada bloco a todos os eixos que fizerem sentido para ele, não só a um — a partir daqui o registro passa a ser por bloco (não por eixo isolado), já que um bloco de código real costuma acionar mais de um eixo na mesma leitura.
+
+`Observed fact`: `cognitoJwt.ts` tinha um comentário afirmando uso em 2 lugares (`adminSession` + um fallback `Authorization: Bearer` em `adminAuthorizer`) — `adminAuthorizer` já tinha removido esse fallback (confirmado pelo próprio comentário do arquivo e por um teste que já afirmava isso explicitamente). `grep` confirmou só 1 uso real de `verifyIdToken`. Drift de documentação real, corrigido.
+
+`AI inference`: achado mais significativo do bloco — `adminSessionStore.getSession()` existe especificamente para não confiar no TTL do DynamoDB ("best-effort housekeeping, pode levar até 48h para varrer", comentário do próprio arquivo), mas nenhum teste em todo o repositório cobria o cenário que essa checagem resolve: um item com `expires_at` no passado, ainda fisicamente presente na tabela. O teste existente do `adminAuthorizer` só cobria "item não existe" — um cenário diferente (e mais fácil) do que "item existe mas expirou". Esse é o tipo de achado que só aparece ao perguntar "o que esse comentário afirma, e isso tem prova?" eixo a eixo — exatamente o ponto central deste caso (§1).
+
+**Correção aplicada**: comentário de `cognitoJwt.ts` corrigido; `backend/src/common/adminSessionStore.test.ts` novo, testando a corrida de expiração diretamente. `mediaUpload` (allowlist de Content-Type, `content-length-range` via presigned POST, sanitização de nome de arquivo, confirmado via Terraform que a rota exige o mesmo autorizador de cookie) e `adminSession`/`adminAuthorizer` (cookie `HttpOnly/Secure/SameSite=Strict`, SRP 100% client-side) não produziram achado novo — avaliação honesta, não achado forçado.
+
+Nota pós-correção: 8.9/10. Commit `31d4604`.
+
+## 2.3-2.7 Demais blocos
+
+Pendente — preenchido conforme Pipeline assíncrono, Infraestrutura, Frontend público, Admin SPA e Subsistema editorial forem auditados (`docs/engineering/reviews/blocks.md`).
 
 # 6. Critérios de aceitação
 

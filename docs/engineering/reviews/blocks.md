@@ -46,11 +46,14 @@ Governança de IA não se aplica a nenhum bloco de código — é sobre o proces
 | Qualidade de Engenharia | Q1/Q2 corrigidos + bug real achado e corrigido (`149bf19`) | 8.3→9.1 | bloqueado |
 | Segurança/AppSec | Nenhum achado novo (já coberto pelos 2 eixos acima) | 8.9 | bloqueado |
 
+## Registro de rodadas — Bloco 2 (concluído do lado Claude)
+
+Eixos combinados num único documento (`block-2-api-sincrona/round1-claude-proposal.md`) por eficiência. Achados: comentário desatualizado em `cognitoJwt.ts` (corrigido), garantia central de expiração de sessão nunca testada diretamente (corrigido, `adminSessionStore.test.ts` novo). `mediaUpload`/`adminSession`/`adminAuthorizer` sem lacuna de comportamento real. Nota pós-correção: 8.9/10. Commit `31d4604`. Codex: bloqueado (mesma janela).
+
 ## Registro de rodadas — Blocos restantes
 
 | Bloco | Status |
 |---|---|
-| 2. API backend síncrona | pendente |
 | 3. Pipeline assíncrono/agendado | pendente |
 | 4. Infraestrutura (Terraform) | pendente |
 | 5. Frontend público | pendente |

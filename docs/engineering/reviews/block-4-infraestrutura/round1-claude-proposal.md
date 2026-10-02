@@ -1,6 +1,6 @@
 # Bloco 4 — Infraestrutura (Terraform) — Rodada 1 completa (proposta independente, Claude)
 
-**Escopo**: todos os 10 módulos de `infra/modules/` lidos por completo (`api-gateway` 951 linhas, `cognito`, `dynamodb` — já coberto no Bloco 1 —, `finops`, `frontend` — CSP já avaliada —, `lambda` — IAM já amostrado —, `media` — já coberto no Bloco 3 —, `observability` — dashboard/SLO/canary —, `security-monitoring` — CloudTrail/GuardDuty —, `admin` — S3/CloudFront). Eixos: Arquitetura, Segurança/AppSec, Qualidade de Engenharia.
+**Escopo**: 8 dos 10 módulos de `infra/modules/` lidos por completo (`api-gateway` 951 linhas, `cognito`, `finops`, `observability` — dashboard/SLO/canary —, `security-monitoring` — CloudTrail/GuardDuty —, `admin` — S3/CloudFront —, mais `dynamodb` e `media`, já cobertos por completo nos Blocos 1 e 3 respectivamente). `lambda` permanece com a política IAM amostrada por risco, não as 11 policies lidas linha a linha; `frontend/cloudfront.tf` com a seção de CSP verificada, demais recursos do módulo não relidos nesta rodada — cobertura genuinamente parcial nesses 2, declarada, não escondida. Eixos: Arquitetura, Segurança/AppSec, Qualidade de Engenharia.
 
 ## Achados corrigidos
 

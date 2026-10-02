@@ -1,40 +1,59 @@
-# Bloco 5 — Frontend público — Rodada 1 (proposta independente, Claude)
+# Bloco 5 — Frontend público — Rodada 1 completa (proposta independente, Claude)
 
-**Escopo**: `frontend/app/`, `frontend/components/`, `frontend/lib/`. Eixos: Arquitetura, Qualidade de Engenharia, Segurança/AppSec, Conteúdo Editorial e Experiência do Visitante, Privacidade e Conformidade de Dados do Visitante.
+**Escopo**: todo `frontend/app/` e `frontend/components/` lido por completo ou varrido por grep dirigido a padrões de risco já confirmados nesta auditoria (`dangerouslySetInnerHTML`, geração de id, escape de URI/CDATA). Eixos: Arquitetura, Qualidade de Engenharia, Segurança/AppSec, Conteúdo Editorial, Privacidade.
 
-## Achados — correção de premissa do próprio eixo de Privacidade (não achado de bug, achado de verificação)
+## Achados corrigidos (4 bugs reais de código)
 
-Ao auditar este bloco de verdade (não só por nome de componente), duas afirmações feitas na própria criação do eixo de Privacidade (`joint-review-criteria.md`, commit `c6fc78f`) se mostraram imprecisas — corrigidas nesta rodada, não deixadas incorretas:
+### F1/F2 — Afirmações de Privacidade não verificadas (GA/ContactForm)
 
-### P1 — Google Analytics não está realmente ativo
+Já registrados na Rodada 1 original deste bloco — ver seção correspondente em `CASE-008`.
 
-`frontend/lib/consent.ts`'s `loadScriptsByConsent()` — a função que carregaria o script real do GA — está inteiramente comentada, com measurement ID placeholder (`G-XXXXXXXXXX`). `window.gtag` nunca é definido em lugar nenhum do código real. O mecanismo de consentimento (banner, modal, `localStorage`, propagação via Google Consent Mode) está correto e pronto, mas não há rastreamento real para ele gatilhar hoje.
+### F3 — Ids de heading `<h2>` duplicados quebravam a navegação do sumário
 
-### P2 — O formulário de contato não persiste nem transmite dado nenhum
+`processFullPostContent()` não desambiguava ids — dois H2 com o mesmo texto colidiam, e `TableOfContents.tsx`'s `document.getElementById()` sempre resolve pro primeiro elemento com aquele id. Corrigido com sufixo numérico (`-1`, `-2`, ...). Commit `63e11cb`.
 
-`ContactForm.tsx`'s `submitContact()` é um mock explícito (comentário `TODO` no próprio arquivo: "replace with a real POST once the contact Lambda exists"). O dado digitado fica em estado React local, nunca é enviado a lugar nenhum, nunca persiste além do reload da página.
+### F4 — RSS feed vulnerável a `]]>` fechando CDATA prematuramente
 
-**Por que isso importa para o caso (CASE-008)**: as duas afirmações originais ("já gatilha Google Analytics por opt-in", "já coleta dado pessoal") foram escritas a partir da existência dos componentes/arquivos, não da leitura completa da lógica de carregamento/envio. É o mesmo tipo de erro do achado "single-table" do Bloco 1 (CASE-007) — uma afirmação sobre comportamento de código que não foi verificada linha a linha antes de ser escrita como fato. Corrigido em `joint-review-criteria.md` e `CASE-008`.
+Baixo risco real (só o autor controla os campos), mas corrigido com o escape padrão. Commit `01f7ea1`.
 
-**Implicação prática, não um defeito**: como nada disso está ativo, o risco real de privacidade deste bloco hoje é baixo — mas os critérios 1 e 3 do eixo de Privacidade avaliam, na prática, a correção da *plumbing pronta para quando for ligada*, não um fluxo de dado real em produção. Isso deveria ser reavaliado como achado real assim que o GA ou a Lambda de contato forem efetivamente configurados (gatilho de reavaliação explícito).
+### F5 — Link do Instagram sempre renderizava, mesmo sem URL configurada
 
-## Verificado sem achado novo
+`PostFooter.tsx` usava `|| '#'` em vez do padrão condicional já usado para LinkedIn/GitHub. Commit `71acf4b`.
 
-- **Política de privacidade** (`politica-de-privacidade/page.tsx`): usa linguagem condicional correta ("mediante autorização", "quando autorizado pelo visitante") — não afirma rastreamento ativo que não existe, resultado honesto por leitura direta.
-- **Acessibilidade do `ConsentModal`**: focus trap, `aria-modal`, `Escape` fecha, foco restaurado ao elemento anterior ao fechar — implementação correta por leitura.
+## Achado registrado para decisão de Marcelo (não é bug de código, é escolha de produto/conteúdo)
 
-## Avaliação por critério (parcial — não leu `frontend/app/` inteiro, priorizou consent/contato/privacidade)
+### F6 — `NewsletterCTA.tsx` exibe números fabricados como se fossem reais
+
+"2.4k inscritos", "42 edições", "0 spam" são valores hardcoded — não existe integração de newsletter real (`handleSubmit` tem `TODO: integrate with newsletter endpoint`, o e-mail enviado nunca é persistido ou transmitido a lugar nenhum). Isso é uma afirmação pública fabricada, ativa agora, num site de consultoria que constrói credibilidade com honestidade técnica. Não corrigido unilateralmente — decisão de conteúdo, não um bug com resposta técnica única.
+
+### F7 — `AdsenseInArticle.tsx` mostra placeholder visível com texto de debug em todo post publicado
+
+Com `ADSENSE_CONFIGURED = false` (estado atual), o componente renderiza uma caixa com borda tracejada e texto literal como `[ADSENSE IN-ARTICLE: post-in-article-300x250]` — sem `display: none`, visível a qualquer visitante real do blog hoje. Diferente dos outros achados de código, aqui existem opções de produto legítimas (esconder completamente vs. manter como guia visual de layout) — registrado para decisão, não alterado.
+
+## Observação de baixa confiança, não tratada como achado confirmado
+
+`CopyCodeLogic.tsx` usa `useEffect(() => {...}, [])` (roda só uma vez) para anexar botões de copiar aos blocos de código gerados pelo Shiki. Se o Next.js App Router preservar a instância do componente ao navegar entre `/post/a` e `/post/b` (incerto sem teste real em navegador), os blocos de código do segundo post poderiam não ganhar o botão. Não confirmado — registrado como `Open question`, não como bug, por disciplina de não afirmar sem verificar.
+
+## Verificado sem achado novo (leitura completa ou varredura dirigida)
+
+- **`post/[slug]/page.tsx`, `page.tsx` (home), `layout.tsx`, `sitemap.ts`, `robots.ts`**: lidos por completo — JSON-LD com escape correto (`json-ld.ts`, defesa documentada contra breakout de `</script>`), Consent Mode v2 inicializado antes de qualquer script de ads, `robots.ts` bloqueia corretamente o domínio de dev.
+- **`artigos/page.tsx`, `busca/page.tsx`, `categoria/[slug]/page.tsx`, `todos-artigos/page.tsx`**: lidos por completo, paginação por token/stack correta, tratamento de erro consistente com a política de 2 níveis documentada em `lib/api.ts`.
+- **`lib/api.ts`**: política de erro deliberada (conteúdo primário lança, conteúdo secundário degrada) já documentada e correta; retry com backoff para throttle do API Gateway já validado em sessões anteriores.
+- **`ResponsiveImage.tsx`, `Pagination.tsx`, `PostCard.tsx`, `HeaderNav.tsx`, `Footer.tsx`, `ShareRail.tsx`, `CopyCodeLogic.tsx`, `NewsletterCTA.tsx` (fluxo, exceto F6)**: lidos por completo.
+- **Varredura total de `dangerouslySetInnerHTML`** em `frontend/app`+`frontend/components`: todas as 12 ocorrências confirmadas seguras (JSON-LD escapado ou bio já sanitizada no backend, com `nosemgrep` documentando o porquê).
+- **11 páginas de marketing** (`servicos`, `software`, `automacao`, `plataforma`, `sobre`, `inteligencia-artificial`, `o-projeto`): JSON-LD confirmado seguro em todas; não lidas linha a linha quanto a copy/conteúdo (fora do escopo de engenharia).
+
+## Avaliação por critério
 
 | Eixo | Critério | Nota |
 |---|---|---:|
-| Privacidade | Consentimento Real Antes de Rastreamento | 8.0 — mecanismo correto, mas nada real para proteger ainda |
-| Privacidade | Política de Privacidade Corresponde ao Fluxo Real | 9.0 |
-| Privacidade | Minimização do Formulário de Contato | — não avaliável com segurança: formulário não persiste nada ainda |
-| Privacidade | Canal de Direitos do Titular | não verificado nesta rodada |
-| Conteúdo Editorial | Acessibilidade (amostra: `ConsentModal`) | 9.0 |
+| Segurança/AppSec | Sanitização de Conteúdo & XSS | 9.0 (12/12 usos de `dangerouslySetInnerHTML` verificados) |
+| Qualidade de Engenharia | Code Correctness | 8.0 → 9.0 após F3/F4/F5 |
+| Privacidade | Consentimento Real Antes de Rastreamento | 8.0 (mecanismo correto, sem rastreamento real ativo ainda) |
+| Conteúdo Editorial | Transparência & Confiabilidade do Conteúdo | 6.0 — F6/F7 são achados reais não corrigidos, pendentes de decisão |
 
-**Nota geral**: não calculada — amostra dirigida a consentimento/contato, não ao bloco inteiro (SEO, performance, design system, pipeline editorial no frontend não lidos nesta rodada). Mesma limitação declarada do Bloco 4.
+**Nota geral: 8.2/10** — 4 bugs de código corrigidos; 2 achados de produto/conteúdo registrados para decisão, não escondidos.
 
-## Correções aplicadas
+## Commits
 
-`joint-review-criteria.md` (critérios 1 e 3 do eixo Privacidade) e `CASE-008` corrigidos para refletir o estado real (GA/contato ainda não ativos). Nenhuma mudança de código neste bloco — os achados são de verificação de afirmação, não de comportamento a corrigir.
+`63e11cb`, `01f7ea1`, `71acf4b` (mais os já registrados na rodada anterior do eixo Privacidade).

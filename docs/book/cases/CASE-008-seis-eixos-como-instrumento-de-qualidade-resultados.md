@@ -100,15 +100,21 @@ Nota pós-correção: 8.9/10. Commit `31d4604`.
 
 `AI inference`: isso é, em si, um dado relevante para a pergunta central deste caso (§6, critérios de aceitação) — nem todo bloco produz achado ao ser auditado por um eixo nomeado; um bloco que já recebeu atenção de engenharia repetida no passado tende a não produzir achado novo, o que é evidência de que a auditoria está discriminando sinal real (onde há lacuna, acha; onde não há, não força). Nota: 8.7/10, sem correção aplicada.
 
-## 2.4 Bloco 4 (Infraestrutura) — amostragem declarada, não cobertura completa
+## 2.4 Bloco 4 (Infraestrutura) — quase total após pedido de auditoria total
 
-`Limitation`: 10 módulos de Terraform é escopo grande demais para leitura exaustiva no tempo desta sessão — esta rodada amostrou as áreas de maior risco (IAM, CloudTrail/GuardDuty, CSP) em vez de ler os ~10 módulos inteiros. Registrado explicitamente como limitação (`capture-protocol.md` §12 — "registrar incerteza quando a evidência for incompleta"), não apresentado como auditoria completa por omissão.
+`Limitation` (histórico, Rodada 1 original): a primeira passada amostrou as áreas de maior risco percebido (IAM, CloudTrail/GuardDuty, CSP) em vez de ler os 10 módulos inteiros — registrada explicitamente como limitação (`capture-protocol.md` §12), não apresentada como completa por omissão.
 
-`Observed fact`: a CSP do frontend usa `script-src 'self' 'unsafe-inline'`, uma fraqueza real de defesa-em-profundidade contra XSS — mas já é decisão documentada e justificada no próprio arquivo Terraform (migrar para nonce exigiria middleware por request). Não contado como achado novo por já estar sob decisão consciente, mas sinalizado para a crítica do Codex avaliar a proporcionalidade.
+`Observed fact` (releitura total, após "quero auditoria total"): leitura completa de `cognito`, `finops`, `admin`, `api-gateway` (951 linhas), `observability`, `security-monitoring`, mais `dynamodb`/`media` já cobertos nos Blocos 1/3 encontrou 2 achados reais — mesma classe de drift de comentário já vista 2 vezes antes neste caso (§14): o comentário do `admin_cookie_auth` em `api-gateway/main.tf` ainda descrevia um fallback Bearer já removido (achado do Bloco 2), e `/admin/autores` (plural) é um recurso do API Gateway declarado mas nunca conectado a método algum — confirmado contra a UI real do admin, que não tem listagem de autores. Ambos corrigidos (comentário) ou documentados como decisão pendente de Marcelo (remover ou não o recurso órfão, mudança de infra). `lambda` (IAM amostrado, não as 11 policies linha a linha) e `frontend/cloudfront.tf` (só CSP verificada) seguem genuinamente parciais — única cobertura não-total que resta em todo o ciclo.
 
-## 2.5 Bloco 5 (Frontend público) — achado de verificação, não de bug
+A CSP do frontend usa `script-src 'self' 'unsafe-inline'`, uma fraqueza real de defesa-em-profundidade contra XSS — mas já é decisão documentada e justificada no próprio arquivo Terraform (migrar para nonce exigiria middleware por request). Não contado como achado novo. Nota: 8.6/10.
 
-Ver seção dedicada acima (achados P1/P2) — resumo: duas afirmações do próprio eixo de Privacidade ("Google Analytics já gatilha", "ContactForm já coleta dado") eram imprecisas, escritas sem ler a lógica completa de carregamento/envio. `loadScriptsByConsent()` tem o GA comentado; `submitContact()` é mock explícito. Corrigido nos critérios. Mesma classe de erro do achado "single-table" do Bloco 1 — padrão que já aparece 2 vezes nesta auditoria (`AI inference`: candidato real a princípio generalizável, ver seção 14).
+## 2.5 Bloco 5 (Frontend público) — 4 bugs reais + 2 achados de produto, auditoria total
+
+`Observed fact` (Rodada 1 original, amostra): duas afirmações do próprio eixo de Privacidade ("Google Analytics já gatilha", "ContactForm já coleta dado") eram imprecisas, escritas sem ler a lógica completa de carregamento/envio. `loadScriptsByConsent()` tem o GA comentado; `submitContact()` é mock explícito. Mesma classe de erro do achado "single-table" do Bloco 1 — padrão que já aparece 2 vezes nesta auditoria (`AI inference`: candidato real a princípio generalizável, ver seção 14).
+
+`Observed fact` (releitura total de `frontend/app`+`frontend/components`, após o pedido de auditoria total): 4 bugs de código reais, até então não encontrados pela amostra — ids de `<h2>` duplicados quebrando a navegação do sumário (`TableOfContents.tsx` resolve sempre pro primeiro elemento com aquele id, corrigido com sufixo numérico), CDATA do RSS vulnerável a `]]>` fechando a seção prematuramente, e o link do Instagram sempre renderizando mesmo sem URL configurada (inconsistente com o padrão condicional já usado para LinkedIn/GitHub). Todos corrigidos.
+
+**Achado de produto/conteúdo, não de bug, registrado para decisão de Marcelo**: `NewsletterCTA.tsx` exibe números fabricados ("2.4k inscritos", "42 edições", "0 spam") sem nenhuma integração real de newsletter — afirmação pública ativa hoje num site de consultoria que constrói credibilidade com honestidade técnica. `AdsenseInArticle.tsx` mostra, com `ADSENSE_CONFIGURED = false`, um placeholder visível com texto de debug literal (`[ADSENSE IN-ARTICLE: ...]`) em todo post publicado. Nenhum dos dois foi corrigido unilateralmente — são decisão de conteúdo/produto, não bug com resposta técnica única. Nota pós-correção: 8.2/10.
 
 ## 2.6 Bloco 6 (Admin SPA) — 3 bugs reais, auditoria total (não por amostra)
 
@@ -135,12 +141,12 @@ Contexto relevante: já tinha passado por 2 rodadas de revisão cega via Codex C
 | 1. Modelo de dados | A1/A2/A3 corrigidos + bug real (listCategorias) | 9.1 |
 | 2. API síncrona | Comentário obsoleto + lacuna de teste na expiração de sessão, ambos corrigidos | 8.9 |
 | 3. Pipeline assíncrono | Nenhum | 8.7 |
-| 4. Infraestrutura | Nenhum novo (amostra parcial declarada) | não calculada |
-| 5. Frontend público | 2 afirmações de privacidade corrigidas (verificação, não bug) | não calculada |
-| 6. Admin SPA | Nenhum | 8.8 |
+| 4. Infraestrutura | Comentário obsoleto (`api-gateway`) + recurso órfão (`/admin/autores`), corrigidos | 8.6 |
+| 5. Frontend público | 4 bugs corrigidos (heading id, CDATA, link Instagram) + 2 achados de produto p/ Marcelo | 8.2 |
+| 6. Admin SPA | 3 bugs reais corrigidos (sanitizador, `bulkPublish`, `allowBase64`) | 8.4 |
 | 7. Subsistema editorial | Nenhum (já hardenizado recentemente) | 8.7 |
 
-Pendência comum a todos os 7: crítica cruzada real do Codex, bloqueada até 2026-10-03 15:20 — nenhum bloco está formalmente convergido pelo protocolo completo ainda, só auditado do lado Claude.
+Pendência comum a todos os 7: crítica cruzada real do Codex, bloqueada até 2026-10-03 15:20 — nenhum bloco está formalmente convergido pelo protocolo completo ainda, só auditado do lado Claude. O Bloco 4 é o único com cobertura ainda genuinamente parcial (`lambda`/`frontend cloudfront.tf`, declarado em §2.4).
 
 # 6. Critérios de aceitação
 

@@ -54,13 +54,13 @@ Eixos combinados num único documento (`block-2-api-sincrona/round1-claude-propo
 
 Nenhum achado novo (`block-3-pipeline-assincrono/round1-claude-proposal.md`) — `postScheduler`/`postCounterReconciler`/`imageProcessor` já bem cobertos por rodadas de auditoria anteriores (histórico em `docs/backlog.md`). Resultado honesto, sem correção aplicada. Nota: 8.7/10.
 
-## Registro de rodadas — Bloco 4 (parcial, amostragem declarada)
+## Registro de rodadas — Bloco 4 (quase total — 8/10 módulos lidos por completo)
 
-`block-4-infraestrutura/round1-claude-proposal.md` — IAM/CloudTrail/GuardDuty/CSP verificados por amostragem dirigida a risco, sem achado novo (CSP `unsafe-inline` já é decisão documentada, não lacuna). 6 dos 10 módulos não lidos linha a linha nesta rodada (declarado, não omitido) — nota geral não calculada por amostra insuficiente.
+`block-4-infraestrutura/round1-claude-proposal.md` — leitura completa de `cognito`, `finops`, `admin`, `api-gateway` (951 linhas), `observability`, `security-monitoring`, mais `dynamodb`/`media` já cobertos por completo nos Blocos 1/3, encontrou 2 achados reais corrigidos (comentário obsoleto em `api-gateway/main.tf`, recurso órfão `/admin/autores`). `lambda` (IAM amostrado, não as 11 policies linha a linha) e `frontend/cloudfront.tf` (só a seção de CSP verificada) permanecem genuinamente parciais — declarado, não escondido. Nota: 8.6/10.
 
-## Registro de rodadas — Bloco 5 (parcial, amostragem declarada)
+## Registro de rodadas — Bloco 5 (concluído, auditoria TOTAL — não por amostra)
 
-`block-5-frontend-publico/round1-claude-proposal.md` — achado real de **verificação, não de bug**: `joint-review-criteria.md` afirmava que o Google Analytics "já gatilha" por opt-in e que o `ContactForm` "já coleta dado pessoal" — ambas escritas sem ler a lógica completa. Real: `loadScriptsByConsent()` tem o carregamento do GA inteiramente comentado (placeholder), e `submitContact()` é um mock explícito sem persistência. Corrigido nos próprios critérios. Amostra dirigida a consentimento/contato/privacidade, não ao bloco inteiro (SEO/performance/design system não lidos).
+`block-5-frontend-publico/round1-claude-proposal.md` — releitura completa de todo `frontend/app`+`frontend/components` encontrou 4 bugs de código corrigidos (ids de heading duplicados quebrando o sumário `63e11cb`, CDATA do RSS sem escape `01f7ea1`, link morto do Instagram `71acf4b`, mais os 2 achados de verificação de Privacidade já registrados na amostra inicial) e **2 achados de produto/conteúdo registrados para decisão de Marcelo, não corrigidos unilateralmente**: `NewsletterCTA.tsx` exibe números fabricados ("2.4k inscritos") sem integração real, e `AdsenseInArticle.tsx` mostra um placeholder visível com texto de debug em todo post publicado hoje. Nota pós-correção: 8.2/10.
 
 ## Registro de rodadas — Bloco 6 (concluído, auditoria TOTAL — não por amostra)
 
@@ -70,6 +70,18 @@ Nenhum achado novo (`block-3-pipeline-assincrono/round1-claude-proposal.md`) —
 
 `block-7-subsistema-editorial/round1-claude-proposal.md` — nenhum achado novo; subsistema já passou por 2 rodadas de revisão cega via Codex CLI fora deste protocolo, na mesma sessão de trabalho (contexto declarado, não escondido). Nota: 8.7/10.
 
-## Todos os 7 blocos concluídos do lado Claude
+## Todos os 7 blocos concluídos do lado Claude — auditoria TOTAL, não por amostra
 
-Pendência única e comum a todos: a crítica cruzada real do Codex, bloqueada por rate-limit até 2026-10-03 15:20. Nenhum bloco pode ser considerado convergido pelo protocolo completo (`CLAUDE.md` §11) até essa rodada acontecer.
+Resumo final: **11 bugs de código reais encontrados e corrigidos**, mais **2 achados de produto/conteúdo registrados para decisão de Marcelo** (não escondidos, não corrigidos unilateralmente), mais **2 achados de verificação** (afirmações próprias desta auditoria corrigidas contra a realidade do código).
+
+| Bloco | Bugs corrigidos | Achados de decisão | Nota |
+|---|---:|---:|---:|
+| 1. Modelo de dados | 3 (A1/A2/A3 + bug real `listCategorias`) | 0 | 9.1 |
+| 2. API síncrona | 2 (comentário obsoleto + lacuna de teste) | 0 | 8.9 |
+| 3. Pipeline assíncrono | 0 | 0 | 8.7 |
+| 4. Infraestrutura | 2 (comentário obsoleto + recurso órfão) | 0 | 8.6 (8/10 módulos lidos por completo: `cognito`, `finops`, `admin`, `api-gateway` (951 linhas), `observability`, `security-monitoring`, mais `dynamodb`/`media` já cobertos nos Blocos 1/3; `lambda` com IAM amostrado, não as 11 policies linha a linha; `frontend/cloudfront.tf` com CSP verificada, demais recursos não relidos nesta rodada) |
+| 5. Frontend público | 4 (+ 2 verificações) | 2 (NewsletterCTA, AdsenseInArticle) | 8.2 |
+| 6. Admin SPA | 3 (sanitizador, bulkPublish, allowBase64) | 0 | 8.4 |
+| 7. Subsistema editorial | 1 (quoting do publication_id) | 0 | 8.7 |
+
+Pendência comum a todos: a crítica cruzada real do Codex, bloqueada por rate-limit até 2026-10-03 15:20. Nenhum bloco pode ser considerado convergido pelo protocolo completo (`CLAUDE.md` §11) até essa rodada acontecer. O Bloco 4 é o único com cobertura genuinamente parcial restante: 8 dos 10 módulos de Terraform lidos por completo, `lambda` (IAM amostrado) e `frontend/cloudfront.tf` (só CSP verificada) ainda não relidos linha a linha — declarado explicitamente, não escondido.

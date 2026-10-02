@@ -58,6 +58,10 @@ Nenhum achado novo (`block-3-pipeline-assincrono/round1-claude-proposal.md`) —
 
 `block-4-infraestrutura/round1-claude-proposal.md` — IAM/CloudTrail/GuardDuty/CSP verificados por amostragem dirigida a risco, sem achado novo (CSP `unsafe-inline` já é decisão documentada, não lacuna). 6 dos 10 módulos não lidos linha a linha nesta rodada (declarado, não omitido) — nota geral não calculada por amostra insuficiente.
 
+## Registro de rodadas — Bloco 5 (parcial, amostragem declarada)
+
+`block-5-frontend-publico/round1-claude-proposal.md` — achado real de **verificação, não de bug**: `joint-review-criteria.md` afirmava que o Google Analytics "já gatilha" por opt-in e que o `ContactForm` "já coleta dado pessoal" — ambas escritas sem ler a lógica completa. Real: `loadScriptsByConsent()` tem o carregamento do GA inteiramente comentado (placeholder), e `submitContact()` é um mock explícito sem persistência. Corrigido nos próprios critérios. Amostra dirigida a consentimento/contato/privacidade, não ao bloco inteiro (SEO/performance/design system não lidos).
+
 ## Registro de rodadas — Blocos restantes
 
 | Bloco | Status |

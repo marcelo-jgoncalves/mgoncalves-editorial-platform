@@ -74,7 +74,9 @@ Antes de `joint-review-criteria.md` existir, este projeto não tinha uma lista e
 
 **Achado colateral real, corrigido junto**: `categoria.ts` não declarava `descricao_seo`, embora `adminCategories/index.ts` já aceitasse e persistisse esse campo — drift entre contrato e implementação, só visível ao escrever o schema Zod campo a campo contra o handler real.
 
-**Achado real, ainda em aberto** (exige desenho mais cuidadoso, candidato a rodada formal do protocolo quando o Codex estiver disponível): resultados de GSI devolvidos pela API pública (`getPosts/index.ts`) nunca passam por validação de schema — `postEntitySchema` não pode ser reaplicado diretamente porque os GSIs projetam só um subconjunto de campos (`infra/modules/dynamodb/main.tf`).
+**Achado real, ainda em aberto** (exige desenho mais cuidadoso, candidato a rodada formal do protocolo quando o Codex estiver disponível): resultados de GSI devolvidos pela API pública (`getPosts/index.ts`) nunca passam por validação de schema — `postEntitySchema` não pode ser reaplicado diretamente porque os GSIs projetam só um subconjunto de campos (`infra/modules/dynamodb/main.tf`). O mesmo padrão existe no lado admin (`adminPosts/index.ts:125`, `listPosts()`), com severidade menor por ser tela interna.
+
+**Achado A3 corrigido, com um resultado colateral não previsto**: `adminPosts/index.ts:179`/`:323` liam o item anterior via `as Post` (não `parsePostItem`) antes de um merge PATCH/delete. `Human decision`: Marcelo pediu explicitamente para corrigir, não documentar como pendência, quando perguntado — "Eu não quero que reverta" — depois de uma primeira tentativa ter sido revertida por quebrar 21 testes. A correção real não foi só trocar o cast: **21 testes de `adminPosts/index.test.ts` mockavam a leitura do item anterior com uma forma deliberadamente mínima (`{ status, e_projeto, version }`) que nunca batia com os campos obrigatórios reais de `postEntitySchema`** — passavam porque nada verificava isso em runtime antes. `AI inference`: isso é evidência de que a ausência de validação na fronteira não é neutra mesmo quando "nada quebra" — ela permite que a suíte de testes se acostume com uma forma de dado que não existe de verdade, até que algo finalmente a force a ser honesta. Corrigido espalhando `SAMPLE_POST` completo em cada fixture, sobrescrevendo só os campos que cada teste realmente exercita. 220/220 testes voltaram a passar depois do ajuste.
 
 ## 2.2-2.7 Demais eixos
 
@@ -108,6 +110,7 @@ Este caso produz sinal real (e não "teatro de rigor") se, eixo a eixo, pelo men
 | Human decision | Pedido explícito de fechar a pergunta "os eixos atuais são suficientes?" com pesquisa externa antes de auditar qualquer bloco | "Antes de qualquer coisa temos que definir isso. Se necessário, pesquise na Internet.", nesta sessão, 2026-10-02 |
 | Human decision | Aprovação do 7º eixo com os 4 critérios propostos, sem esperar rodada formal do protocolo (Codex indisponível) | Resposta direta a pergunta estruturada, mesma sessão |
 | Human intervention | Correção do escopo deste próprio caso, de "decisão de transposição" para "resultado de qualidade" | "Eu não falo da transposição [...] o resultado que isso traz para a qualidade do projeto em si.", mesma sessão |
+| Human intervention | Rejeição explícita do julgamento de engenharia da IA de reverter A3 depois que a correção quebrou 21 testes, exigindo consertar as fixtures em vez de recuar | "Você não é obrigado a fazer mudanças, apenas se as encontrar, precisamos já corrigir" seguido de "Eu não quero que reverta", mesma sessão |
 
 # 11. Evidência de antes e depois
 

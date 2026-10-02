@@ -1,6 +1,6 @@
 ---
 id: CASE-007
-title: "Primeira aplicação real (prospectiva) do protocolo de debate Claude↔Codex neste repositório: auditoria dos 6 eixos de qualidade, bloco a bloco"
+title: "Primeira aplicação real (prospectiva) do protocolo de debate Claude↔Codex neste repositório: auditoria dos 7 eixos de qualidade, bloco a bloco"
 summary: "Registro em tempo real, não retrospectivo, de como o protocolo Claude↔Codex adaptado do expiration-tracker (CASE-005) se comporta na primeira auditoria real conduzida neste repositório: divisão em blocos auditáveis, proposta independente, crítica cruzada e nota cega, eixo por eixo, começando por Arquitetura."
 date_started: 2026-10-02
 date_closed:
@@ -44,7 +44,7 @@ o mesmo protocolo aplicado em outro repositório (expiration-tracker).
 
 # Resumo do caso
 
-Marcelo pediu, na mesma sessão que criou `docs/engineering/standards/{change-risk-scale,quality-gate-tiers,joint-review-criteria,ai-governance}.md` (PR #29, transposição adaptada do protocolo do `expiration-tracker`), que o protocolo fosse imediatamente usado de verdade: uma auditoria dos 6 eixos de `joint-review-criteria.md`, um eixo por vez, cada eixo dividido antes em blocos logicamente auditáveis, cada bloco levado ao protocolo de nota cega até convergência ou impedimento. Este caso captura essa primeira execução real — diferente do CASE-005, que reconstruiu uma execução passada em outro repositório a partir de artefatos já prontos, este caso observa o processo acontecer.
+Marcelo pediu, na mesma sessão que criou `docs/engineering/standards/{change-risk-scale,quality-gate-tiers,joint-review-criteria,ai-governance}.md` (PR #29, transposição adaptada do protocolo do `expiration-tracker`), que o protocolo fosse imediatamente usado de verdade: uma auditoria dos eixos de `joint-review-criteria.md` (6 no momento do pedido, corrigido para 7 antes do início do Bloco 1 — ver nota abaixo), um eixo por vez, cada eixo dividido antes em blocos logicamente auditáveis, cada bloco levado ao protocolo de nota cega até convergência ou impedimento. Este caso captura essa primeira execução real — diferente do CASE-005, que reconstruiu uma execução passada em outro repositório a partir de artefatos já prontos, este caso observa o processo acontecer.
 
 # 1. Contexto
 
@@ -54,7 +54,7 @@ Marcelo pediu, na mesma sessão que criou `docs/engineering/standards/{change-ri
 
 # 2. Problema observado / pergunta de pesquisa
 
-`Open question`: o protocolo (nota cega, limiar 9.0, 6 eixos recalibrados) produz achados reais e calibrados quando aplicado a um projeto solo de conteúdo/consultoria, ou a estrutura de 9→6 eixos e a escala de risco adaptada perdem precisão na transposição?
+`Open question`: o protocolo (nota cega, limiar 9.0, eixos recalibrados) produz achados reais e calibrados quando aplicado a um projeto solo de conteúdo/consultoria, ou a estrutura de 9→6 eixos e a escala de risco adaptada perdem precisão na transposição?
 
 `Observed fact`: a primeira leitura independente do Bloco 1 (modelo de dados e contratos: `packages/contracts/src/{post,autor,categoria}.ts` + `backend/src/common/{postSchema,dynamodb,postPersistence,postCounters,categorias}.ts`), antes de qualquer rodada do protocolo, já encontrou uma assimetria real: `Post` tem um schema Zod completo (`postEntitySchema`) e é validado em runtime na leitura do DynamoDB via `parsePostItem()` (`backend/src/common/postPersistence.ts:9-18`, cujo próprio comentário declara o princípio: "A cast (`as Post`) only tells the compiler to trust the shape, it proves nothing about the item actually read from DynamoDB [...] This validates at the boundary instead"). `Autor` e `Categoria` (`packages/contracts/src/autor.ts`, `categoria.ts`) são interfaces TypeScript puras, sem schema Zod e sem validação em runtime — `backend/src/functions/getAuthor/index.ts:32` lê o item do DynamoDB e faz `result.Item as Autor` diretamente, exatamente o padrão que o comentário de `postPersistence.ts` identifica como insuficiente.
 
@@ -62,7 +62,7 @@ Marcelo pediu, na mesma sessão que criou `docs/engineering/standards/{change-ri
 
 # 3. Modelo mental inicial
 
-Hipótese de que o protocolo adaptado (6 eixos, escala de risco própria, tiers de gate mapeados aos workflows reais) seria operacionalmente equivalente ao do `expiration-tracker` — a única incerteza genuína era se a *redução* de 9 para 6 eixos perderia sensibilidade a um tipo de achado que um eixo descartado (ex. Operações/SRE) capturaria e que os 6 eixos atuais não cobrem.
+Hipótese de que o protocolo adaptado (eixos próprios, escala de risco própria, tiers de gate mapeados aos workflows reais) seria operacionalmente equivalente ao do `expiration-tracker` — a única incerteza genuína era se a *redução* de 9 para 6 eixos perderia sensibilidade a um tipo de achado que um eixo descartado (ex. Operações/SRE) capturaria e que os eixos atuais não cobrem — pergunta parcialmente respondida antes mesmo do Bloco 1: a checagem contra a realidade do código encontrou que Privacidade faltava, e foi adicionada como 7º eixo (ver nota abaixo).
 
 # 4. Hipótese inicial
 
@@ -84,8 +84,8 @@ Instrução explícita de Marcelo: dividir antes de auditar, bloco a bloco. Hip�
 # 6. Riscos e critérios de aceitação
 
 ## 6.1 Riscos conhecidos
-- Custo de tempo: 7 blocos × mínimo 1-3 rodadas cada, só para o primeiro dos 6 eixos — risco real de "teatro de rigor" se as rodadas pararem de produzir achados novos.
-- Risco de a redução de 9→6 eixos (decisão já tomada e aprovada por Marcelo, não reaberta aqui) ocultar uma classe de achado que um eixo descartado cobriria.
+- Custo de tempo: 7 blocos × mínimo 1-3 rodadas cada, só para o primeiro dos agora 7 eixos — risco real de "teatro de rigor" se as rodadas pararem de produzir achados novos.
+- Risco de a redução de eixos ocultar uma classe de achado real — materializado antes mesmo do Bloco 1: Privacidade foi cortada na primeira versão e precisou ser readicionada após pesquisa externa e inspeção de código (ver nota abaixo, `CASE-008`).
 
 ## 6.2 Critérios de aceitação
 Para efeito deste caso, o protocolo é considerado bem-sucedido no Bloco 1 se: (a) a crítica cruzada do Codex confirma ou refuta o achado de assimetria Post/Autor-Categoria já observado de forma independente nesta seção antes de qualquer rodada; (b) pelo menos um achado da crítica cruzada é específico e verificável por arquivo:linha, não impressão geral de qualidade.

@@ -470,7 +470,7 @@ describe('adminPosts handler', () => {
 
   describe('PATCH /admin/posts/:slug (update)', () => {
     it('updates an existing post', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Publicado', e_projeto: 0, version: 1 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Publicado', e_projeto: 0, version: 1 } }); // Get (existing)
       mockSend.mockResolvedValueOnce({}); // PutCommand
 
       const result = await handler(
@@ -505,7 +505,7 @@ describe('adminPosts handler', () => {
 
     it('nunca grava data_publicacao vazia — cai para o valor existente quando o client manda "" (regressão: crashava o GSI esparso ProjetoPorData_v2)', async () => {
       mockSend.mockResolvedValueOnce({
-        Item: { status: 'Rascunho', e_projeto: 0, data_publicacao: '2026-05-01T00:00:00.000Z', version: 1 },
+        Item: { ...SAMPLE_POST, status: 'Rascunho', e_projeto: 0, data_publicacao: '2026-05-01T00:00:00.000Z', version: 1 },
       }); // Get (existing)
       mockSend.mockResolvedValueOnce({}); // PutCommand
 
@@ -525,7 +525,7 @@ describe('adminPosts handler', () => {
     });
 
     it('atualiza o contador (na transação do Put) quando o status muda de Rascunho para Publicado', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Rascunho', e_projeto: 0, version: 1 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Rascunho', e_projeto: 0, version: 1 } }); // Get (existing)
       mockSend.mockResolvedValueOnce({}); // TransactWriteCommand (Put + contador)
 
       await handler(
@@ -544,7 +544,7 @@ describe('adminPosts handler', () => {
     });
 
     it('decrementa o contador (na transação do Put) quando o status muda de Publicado para Rascunho', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Publicado', e_projeto: 0, version: 1 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Publicado', e_projeto: 0, version: 1 } }); // Get (existing)
       mockSend.mockResolvedValueOnce({}); // TransactWriteCommand (Put + contador)
 
       await handler(
@@ -562,7 +562,7 @@ describe('adminPosts handler', () => {
     });
 
     it('invalida "/" também quando o status muda de Rascunho para Publicado', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Rascunho', e_projeto: 0, version: 1 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Rascunho', e_projeto: 0, version: 1 } }); // Get (existing)
       mockSend.mockResolvedValueOnce({}); // TransactWriteCommand (Put + contador)
 
       await handler(
@@ -579,7 +579,7 @@ describe('adminPosts handler', () => {
     });
 
     it('NÃO invalida "/" quando o post já era Publicado e continua Publicado (edição de conteúdo)', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Publicado', e_projeto: 0, version: 1 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Publicado', e_projeto: 0, version: 1 } }); // Get (existing)
       mockSend.mockResolvedValueOnce({}); // PutCommand
 
       await handler(
@@ -654,7 +654,7 @@ describe('adminPosts handler', () => {
     });
 
     it('sends attribute_exists(slug) as the ConditionExpression', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Publicado', e_projeto: 0, version: 1 } }); // Get
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Publicado', e_projeto: 0, version: 1 } }); // Get
       mockSend.mockResolvedValueOnce({}); // Put
 
       await handler(
@@ -671,7 +671,7 @@ describe('adminPosts handler', () => {
     });
 
     it('increments version on update', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Publicado', e_projeto: 0, version: 4 } }); // Get
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Publicado', e_projeto: 0, version: 4 } }); // Get
       mockSend.mockResolvedValueOnce({}); // Put
 
       await handler(
@@ -688,7 +688,7 @@ describe('adminPosts handler', () => {
     });
 
     it('sends the version-match clause built from the client-sent version', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Publicado', e_projeto: 0, version: 4 } }); // Get
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Publicado', e_projeto: 0, version: 4 } }); // Get
       mockSend.mockResolvedValueOnce({}); // Put
 
       await handler(
@@ -707,7 +707,7 @@ describe('adminPosts handler', () => {
     });
 
     it('returns 409 when the version sent by the client is stale (concurrent edit)', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Publicado', e_projeto: 0, version: 5 } }); // Get
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Publicado', e_projeto: 0, version: 5 } }); // Get
       const conditionalError = Object.assign(new Error('The conditional request failed'), {
         name: 'ConditionalCheckFailedException',
       });
@@ -727,7 +727,7 @@ describe('adminPosts handler', () => {
     });
 
     it('returns the updated slug/version/data_atualizacao in the response body', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Publicado', e_projeto: 0, version: 4 } }); // Get
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Publicado', e_projeto: 0, version: 4 } }); // Get
       mockSend.mockResolvedValueOnce({}); // Put
 
       const result = await handler(
@@ -835,7 +835,7 @@ describe('adminPosts handler', () => {
     });
 
     it('deletes the post and returns 200', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Rascunho', e_projeto: 0, version: 1 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Rascunho', e_projeto: 0, version: 1 } }); // Get (existing)
       mockSend.mockResolvedValueOnce({}); // DeleteCommand
 
       const result = await handler(
@@ -851,7 +851,7 @@ describe('adminPosts handler', () => {
     });
 
     it('calls DynamoDB DeleteCommand with correct key', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Rascunho', e_projeto: 0, version: 1 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Rascunho', e_projeto: 0, version: 1 } }); // Get (existing)
       mockSend.mockResolvedValueOnce({}); // DeleteCommand
       await handler(
         event({ httpMethod: 'DELETE', pathParameters: { slug: 'meu-post' }, queryStringParameters: { version: '1' } }),
@@ -877,7 +877,7 @@ describe('adminPosts handler', () => {
     });
 
     it('sends a version ConditionExpression on the plain DeleteCommand, checked against the client version', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Rascunho', e_projeto: 0, version: 3 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Rascunho', e_projeto: 0, version: 3 } }); // Get (existing)
       mockSend.mockResolvedValueOnce({}); // DeleteCommand
 
       await handler(
@@ -892,7 +892,7 @@ describe('adminPosts handler', () => {
     });
 
     it('sends a version ConditionExpression on the TransactWriteCommand Delete item', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Publicado', e_projeto: 1, version: 5 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Publicado', e_projeto: 1, version: 5 } }); // Get (existing)
       mockSend.mockResolvedValueOnce({}); // TransactWriteCommand
 
       await handler(
@@ -912,7 +912,7 @@ describe('adminPosts handler', () => {
     // client's (older) version ends up in the ConditionExpression is what
     // proves the fix, not just that a 409 happens on a DynamoDB-level error.
     it('checks the ConditionExpression against the client-supplied version, not the version just read from DynamoDB', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Publicado', e_projeto: 1, version: 6 } }); // Get: real version is already 6
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Publicado', e_projeto: 1, version: 6 } }); // Get: real version is already 6
       mockSend.mockResolvedValueOnce({}); // TransactWriteCommand
 
       await handler(
@@ -927,7 +927,7 @@ describe('adminPosts handler', () => {
     });
 
     it('returns 409 when a concurrent update changed the version since the Get (plain Delete)', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Rascunho', e_projeto: 0, version: 3 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Rascunho', e_projeto: 0, version: 3 } }); // Get (existing)
       const conditionalError = Object.assign(new Error('conditional check failed'), { name: 'ConditionalCheckFailedException' });
       mockSend.mockRejectedValueOnce(conditionalError); // DeleteCommand
 
@@ -942,7 +942,7 @@ describe('adminPosts handler', () => {
     });
 
     it('returns 409 when a concurrent update changed the version since the Get (TransactWrite)', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Publicado', e_projeto: 1, version: 5 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Publicado', e_projeto: 1, version: 5 } }); // Get (existing)
       const cancelledError = Object.assign(new Error('transaction cancelled'), {
         name: 'TransactionCanceledException',
         CancellationReasons: [{ Code: 'ConditionalCheckFailed' }, { Code: 'None' }],
@@ -960,7 +960,7 @@ describe('adminPosts handler', () => {
     });
 
     it('decrementa o contador (na transação do Delete) ao deletar um post Publicado', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Publicado', e_projeto: 1, version: 1 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Publicado', e_projeto: 1, version: 1 } }); // Get (existing)
       mockSend.mockResolvedValueOnce({}); // TransactWriteCommand (Delete + counter)
 
       await handler(
@@ -976,7 +976,7 @@ describe('adminPosts handler', () => {
     });
 
     it('invalida /post/{slug} e "/" ao deletar um post Publicado', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Publicado', e_projeto: 1, version: 1 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Publicado', e_projeto: 1, version: 1 } }); // Get (existing)
       mockSend.mockResolvedValueOnce({}); // TransactWriteCommand (Delete + counter)
 
       await handler(
@@ -989,7 +989,7 @@ describe('adminPosts handler', () => {
     });
 
     it('invalida só /post/{slug} (sem "/") ao deletar um Rascunho', async () => {
-      mockSend.mockResolvedValueOnce({ Item: { status: 'Rascunho', e_projeto: 0, version: 1 } }); // Get (existing)
+      mockSend.mockResolvedValueOnce({ Item: { ...SAMPLE_POST, status: 'Rascunho', e_projeto: 0, version: 1 } }); // Get (existing)
       mockSend.mockResolvedValueOnce({}); // DeleteCommand
 
       await handler(

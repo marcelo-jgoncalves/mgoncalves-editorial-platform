@@ -12,7 +12,7 @@ related_commits: []
 related_pull_requests: ["https://github.com/marcelo-jgoncalves/mgoncalves-editorial-platform/pull/29"]
 related_files:
   - "../../engineering/standards/joint-review-criteria.md"
-  - "../../engineering/reviews/architecture-axis/blocks.md"
+  - "../../engineering/reviews/blocks.md"
   - "../../../packages/contracts/src/autor.ts"
   - "../../../packages/contracts/src/categoria.ts"
   - "../../../frontend/components/consent/ConsentModal.tsx"

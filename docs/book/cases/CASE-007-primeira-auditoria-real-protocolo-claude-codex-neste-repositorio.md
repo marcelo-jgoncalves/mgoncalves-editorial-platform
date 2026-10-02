@@ -15,7 +15,7 @@ related_files:
   - "../../engineering/standards/quality-gate-tiers.md"
   - "../../engineering/standards/joint-review-criteria.md"
   - "../../engineering/standards/ai-governance.md"
-  - "../../engineering/reviews/architecture-axis/blocks.md"
+  - "../../engineering/reviews/blocks.md"
   - "../../../packages/contracts/src/post.ts"
   - "../../../packages/contracts/src/autor.ts"
   - "../../../packages/contracts/src/categoria.ts"
@@ -102,7 +102,7 @@ Para efeito deste caso, o protocolo é considerado bem-sucedido no Bloco 1 se: (
 
 | Classificação | Descrição | Referência |
 |---|---|---|
-| AI proposal | Divisão da aplicação em 7 blocos auditáveis para o eixo Arquitetura | `docs/engineering/reviews/architecture-axis/blocks.md` |
+| AI proposal | Divisão da aplicação em 7 blocos auditáveis para o eixo Arquitetura | `docs/engineering/reviews/blocks.md` |
 | AI inference | Achado inicial de assimetria de validação Post vs. Autor/Categoria, antes de qualquer rodada do protocolo | Seção 2 acima |
 
 # 8. Participação humana
@@ -156,7 +156,7 @@ Um protocolo de revisão por pares calibrado para um projeto (SaaS multi-tenant)
 # 18. Referências
 
 - `docs/engineering/standards/{change-risk-scale,quality-gate-tiers,joint-review-criteria,ai-governance}.md` — regras adaptadas sendo testadas por este caso.
-- `docs/engineering/reviews/architecture-axis/blocks.md` — divisão em blocos.
+- `docs/engineering/reviews/blocks.md` — divisão em blocos.
 - `docs/book/cases/CASE-005-protocolo-nota-cega-claude-codex-blueprint.md` — caso irmão, retrospectivo, sobre o protocolo original no `expiration-tracker`.
 
 # 19. Revisão posterior

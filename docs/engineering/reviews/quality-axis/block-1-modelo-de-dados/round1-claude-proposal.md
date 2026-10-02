@@ -1,6 +1,6 @@
 # Bloco 1 — Modelo de dados e contratos — Eixo Qualidade de Engenharia — Rodada 1 (proposta independente, Claude)
 
-**Mesmo bloco do eixo Arquitetura** (`docs/engineering/reviews/architecture-axis/blocks.md`), auditado agora sob um eixo diferente — escopo idêntico, critérios diferentes. Estado do código: já inclui as correções A1/A2/A3 (commits `ec2098b`, `59abf4a`, `9961031`).
+**Mesmo bloco do eixo Arquitetura** (`docs/engineering/reviews/blocks.md`), auditado agora sob um eixo diferente — escopo idêntico, critérios diferentes. Estado do código: já inclui as correções A1/A2/A3 (commits `ec2098b`, `59abf4a`, `9961031`).
 
 **Critérios**: `docs/engineering/standards/joint-review-criteria.md` §"Eixo: Qualidade de Engenharia" (10 critérios, pesos conforme documento).
 

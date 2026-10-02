@@ -182,5 +182,19 @@ describe('getPost handler', () => {
       const result = await handler(event(), ctx, jest.fn());
       expect(result?.statusCode).toBe(500);
     });
+
+    // parsePostItem's own comment claims corrupted data "fails loudly here
+    // rather than reaching business logic silently malformed" - this is the
+    // test that actually proves it, found missing during the Block 1
+    // quality-axis audit (docs/book/cases/CASE-008).
+    it('returns 500 (not 200 with malformed data) when a Publicado item is missing a required field', async () => {
+      const { conteudo_html, ...corruptedItem } = BASE_PUBLISHED_POST;
+      void conteudo_html;
+      mockSend.mockResolvedValueOnce({ Item: corruptedItem });
+
+      const result = await handler(event(), ctx, jest.fn());
+
+      expect(result?.statusCode).toBe(500);
+    });
   });
 });

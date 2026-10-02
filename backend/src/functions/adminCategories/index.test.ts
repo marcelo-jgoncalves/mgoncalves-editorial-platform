@@ -63,6 +63,57 @@ beforeEach(() => {
 });
 
 describe('adminCategories handler', () => {
+  describe('GET /admin/categorias (list) and /:slug (get one)', () => {
+    it('returns the categoria when found', async () => {
+      mockSend.mockResolvedValueOnce({ Item: SAMPLE_CATEGORIA });
+      const result = await handler(
+        event({ pathParameters: { slug: 'devops-automacao' } }),
+        ctx,
+        jest.fn(),
+      );
+      expect(result?.statusCode).toBe(200);
+      expect(JSON.parse(result?.body ?? '{}')).toEqual(SAMPLE_CATEGORIA);
+    });
+
+    it('returns 404 when the categoria is not found', async () => {
+      mockSend.mockResolvedValueOnce({ Item: undefined });
+      const result = await handler(
+        event({ pathParameters: { slug: 'nao-existe' } }),
+        ctx,
+        jest.fn(),
+      );
+      expect(result?.statusCode).toBe(404);
+    });
+
+    // parseCategoriaItem's failure path (Q1, docs/book/cases/CASE-008):
+    // introduced by A1 but never actually tested until this quality-axis pass.
+    it('returns 500 when the stored item is missing a required field', async () => {
+      mockSend.mockResolvedValueOnce({ Item: { categoria_slug: 'devops-automacao' } }); // missing nome
+      const result = await handler(
+        event({ pathParameters: { slug: 'devops-automacao' } }),
+        ctx,
+        jest.fn(),
+      );
+      expect(result?.statusCode).toBe(500);
+    });
+
+    it('lists categorias sorted by nome, dropping a malformed item instead of failing the whole list', async () => {
+      const malformed = { categoria_slug: 'sem-nome' }; // missing nome
+      mockSend.mockResolvedValueOnce({
+        Items: [{ categoria_slug: 'z-slug', nome: 'Zebra' }, malformed, SAMPLE_CATEGORIA],
+      });
+      const result = await handler(event({ pathParameters: null }), ctx, jest.fn());
+
+      expect(result?.statusCode).toBe(200);
+      const body = JSON.parse(result?.body ?? '{}');
+      expect(body.count).toBe(2);
+      expect(body.items.map((i: { categoria_slug: string }) => i.categoria_slug)).toEqual([
+        'devops-automacao',
+        'z-slug',
+      ]);
+    });
+  });
+
   describe('POST /admin/categorias (create)', () => {
     it('creates a new categoria and returns 200', async () => {
       mockSend.mockResolvedValueOnce({});

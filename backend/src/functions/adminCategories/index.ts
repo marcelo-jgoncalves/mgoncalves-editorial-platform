@@ -2,7 +2,7 @@ import { APIGatewayProxyHandler } from "aws-lambda";
 import { ScanCommand, GetCommand, PutCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import { categoriaInputSchema } from "@mgoncalves/contracts";
 import { dynamo } from "../../common/dynamodb";
-import { parseCategoriaItem } from "../../common/categoriaPersistence";
+import { parseCategoriaItem, parseCategoriaItems } from "../../common/categoriaPersistence";
 import { logger } from "../../common/logger";
 import { isConditionalCheckFailure } from "../../common/dynamoErrors";
 import { requireEnv } from "../../common/env";
@@ -72,8 +72,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
 async function listCategorias(requestId: string) {
   const result = await dynamo.send(new ScanCommand({ TableName: TABLE_NAME }));
-  const items = (result.Items || [])
-    .map((item) => parseCategoriaItem(item, { requestId }))
+  const items = parseCategoriaItems(result.Items || [], { requestId })
     .sort((a, b) => a.nome.localeCompare(b.nome));
   logger.info("categorias_listed", { requestId, count: items.length });
   return { statusCode: 200, body: JSON.stringify({ items, count: items.length }), headers };

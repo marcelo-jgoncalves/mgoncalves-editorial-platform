@@ -68,16 +68,29 @@ export async function processFullPostContent(html: string): Promise<ProcessedPos
     if (src) $el.attr('src', normalizeMediaImageSrc(src));
   });
 
+  // Found during the Block 5 full audit (docs/book/cases/CASE-008): two H2s
+  // with the same text (e.g. "Conclus\u00e3o" reused across sections, a real
+  // pattern in longer technical posts comparing several options) used to
+  // collide on the same slug id. Duplicate HTML ids are invalid, and
+  // document.getElementById() (TableOfContents.tsx's click handler and
+  // scroll-spy) always resolves to the FIRST element with that id - the
+  // second heading's TOC entry would silently scroll to the first section
+  // instead, and the scroll-spy would track them as the same target.
+  const seenHeadingIds = new Map<string, number>();
   $('h2').each((_, elem) => {
     const $el = $(elem);
     const text = $el.text();
-    const id = text
+    const baseId = text
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^\w\s-]/g, '')
       .replace(/\s+/g, '-');
-    
+
+    const seenCount = seenHeadingIds.get(baseId) ?? 0;
+    seenHeadingIds.set(baseId, seenCount + 1);
+    const id = seenCount === 0 ? baseId : `${baseId}-${seenCount}`;
+
     $el.attr('id', id);
     headings.push({ id, text });
   });

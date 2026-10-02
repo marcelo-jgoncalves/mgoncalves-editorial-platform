@@ -11,6 +11,9 @@ Mapa de autoridade da documentação. Cada informação tem uma única fonte can
 | Por que uma decisão foi tomada | `engineering/decisions/` |
 | Quais experimentos foram feitos | `engineering/experiments/` |
 | Quais padrões técnicos seguir (princípios, código, testes, IA, Git) | `engineering/standards/` |
+| Quando o protocolo de debate Claude↔Codex é obrigatório | `engineering/standards/change-risk-scale.md` |
+| Critérios de revisão conjunta Claude↔Codex, por eixo | `engineering/standards/joint-review-criteria.md` |
+| Governança de IA (matriz de autoridade, incidentes) | `engineering/standards/ai-governance.md` |
 | Como operar o sistema (ambientes, deploy, problemas conhecidos) | `operations/` |
 | O que está pendente | `backlog.md` |
 | Regras específicas de um componente | `frontend/README.md`, `backend/README.md`, `admin/README.md`, `infra/README.md` |

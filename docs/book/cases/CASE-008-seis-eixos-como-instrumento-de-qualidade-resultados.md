@@ -98,9 +98,15 @@ Nota pós-correção: 8.9/10. Commit `31d4604`.
 
 `AI inference`: isso é, em si, um dado relevante para a pergunta central deste caso (§6, critérios de aceitação) — nem todo bloco produz achado ao ser auditado por um eixo nomeado; um bloco que já recebeu atenção de engenharia repetida no passado tende a não produzir achado novo, o que é evidência de que a auditoria está discriminando sinal real (onde há lacuna, acha; onde não há, não força). Nota: 8.7/10, sem correção aplicada.
 
-## 2.4-2.7 Demais blocos
+## 2.4 Bloco 4 (Infraestrutura) — amostragem declarada, não cobertura completa
 
-Pendente — preenchido conforme Infraestrutura, Frontend público, Admin SPA e Subsistema editorial forem auditados (`docs/engineering/reviews/blocks.md`).
+`Limitation`: 10 módulos de Terraform é escopo grande demais para leitura exaustiva no tempo desta sessão — esta rodada amostrou as áreas de maior risco (IAM, CloudTrail/GuardDuty, CSP) em vez de ler os ~10 módulos inteiros. Registrado explicitamente como limitação (`capture-protocol.md` §12 — "registrar incerteza quando a evidência for incompleta"), não apresentado como auditoria completa por omissão.
+
+`Observed fact`: a CSP do frontend usa `script-src 'self' 'unsafe-inline'`, uma fraqueza real de defesa-em-profundidade contra XSS — mas já é decisão documentada e justificada no próprio arquivo Terraform (migrar para nonce exigiria middleware por request). Não contado como achado novo por já estar sob decisão consciente, mas sinalizado para a crítica do Codex avaliar a proporcionalidade.
+
+## 2.5-2.7 Demais blocos
+
+Pendente — preenchido conforme Frontend público, Admin SPA e Subsistema editorial forem auditados (`docs/engineering/reviews/blocks.md`).
 
 # 6. Critérios de aceitação
 

@@ -54,11 +54,14 @@ Eixos combinados num único documento (`block-2-api-sincrona/round1-claude-propo
 
 Nenhum achado novo (`block-3-pipeline-assincrono/round1-claude-proposal.md`) — `postScheduler`/`postCounterReconciler`/`imageProcessor` já bem cobertos por rodadas de auditoria anteriores (histórico em `docs/backlog.md`). Resultado honesto, sem correção aplicada. Nota: 8.7/10.
 
+## Registro de rodadas — Bloco 4 (parcial, amostragem declarada)
+
+`block-4-infraestrutura/round1-claude-proposal.md` — IAM/CloudTrail/GuardDuty/CSP verificados por amostragem dirigida a risco, sem achado novo (CSP `unsafe-inline` já é decisão documentada, não lacuna). 6 dos 10 módulos não lidos linha a linha nesta rodada (declarado, não omitido) — nota geral não calculada por amostra insuficiente.
+
 ## Registro de rodadas — Blocos restantes
 
 | Bloco | Status |
 |---|---|
-| 4. Infraestrutura (Terraform) | pendente |
 | 5. Frontend público | pendente |
 | 6. Admin SPA | pendente |
 | 7. Subsistema editorial | pendente |

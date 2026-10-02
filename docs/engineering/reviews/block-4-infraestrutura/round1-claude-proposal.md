@@ -1,25 +1,38 @@
-# Bloco 4 — Infraestrutura (Terraform) — Rodada 1 (proposta independente, Claude)
+# Bloco 4 — Infraestrutura (Terraform) — Rodada 1 completa (proposta independente, Claude)
 
-**Escopo**: `infra/modules/{api-gateway,cognito,dynamodb,finops,frontend,lambda,media,observability,security-monitoring,admin}/`. Eixos: Arquitetura, Segurança/AppSec, Qualidade de Engenharia.
+**Escopo**: todos os 10 módulos de `infra/modules/` lidos por completo (`api-gateway` 951 linhas, `cognito`, `dynamodb` — já coberto no Bloco 1 —, `finops`, `frontend` — CSP já avaliada —, `lambda` — IAM já amostrado —, `media` — já coberto no Bloco 3 —, `observability` — dashboard/SLO/canary —, `security-monitoring` — CloudTrail/GuardDuty —, `admin` — S3/CloudFront). Eixos: Arquitetura, Segurança/AppSec, Qualidade de Engenharia.
 
-**Limitação declarada desta rodada** (`capture-protocol.md` — registrar incerteza em vez de forçar completude): 9 módulos de infra é escopo grande demais para leitura linha a linha exaustiva no tempo desta sessão. Esta rodada fez amostragem dirigida pelas áreas de maior risco (IAM/least-privilege, CloudTrail/GuardDuty, CSP) em vez de cobertura completa — registrado explicitamente como limitação, não apresentado como auditoria completa.
+## Achados corrigidos
 
-## Verificado, sem achado novo
+### I1 — Comentário desatualizado em `api-gateway/main.tf` (mesma classe de S1/P1/P2)
 
-- **IAM por função** (`infra/modules/lambda/lambda-iam.tf`, 404 linhas, 1 policy por Lambda): `getPosts_policy` escopado às ARNs reais de `posts`/`categorias` + `/index/*` (não wildcard de conta) — padrão se repete nas demais (confirmado por nome/estrutura, não lidas as 11 policies inteiras linha a linha).
-- **CloudTrail + GuardDuty** (`security-monitoring/main.tf`): bucket com `public_access_block` completo, SSE, `enable_log_file_validation = true` (Trivy AWS-0016), GuardDuty gated por `var.enable_guardduty` (custo real, decisão consciente de não ligar em dev).
-- **CSP do frontend** (`frontend/cloudfront.tf`): `script-src 'self' 'unsafe-inline'` é fraqueza real de defesa-em-profundidade contra XSS (o eixo Segurança pesa isso em 20% via Sanitização de Conteúdo) — mas já é uma decisão **documentada e justificada** no próprio arquivo ("migrar pra nonce/hash exigiria middleware por request, fora de escopo aqui"), não uma lacuna não percebida. Não registrado como achado novo por já estar sob decisão consciente — mas sinalizado para a crítica do Codex avaliar se concorda com a proporcionalidade dessa decisão.
+O comentário de abertura do `aws_api_gateway_authorizer.admin_cookie_auth` ainda descrevia suporte a "Authorization Bearer (legado, mantido durante a transição)" — o fallback já tinha sido removido do código do `adminAuthorizer` (achado do Bloco 2). Terceira ocorrência do mesmo padrão de comentário não sincronizado com o código real nesta auditoria (depois de `cognitoJwt.ts` no Bloco 2 e das afirmações de GA/contato no Bloco 5) — reforça o princípio generalizável já registrado em `CASE-008` §14.
 
-## Não verificado nesta rodada (declarado, não omitido)
+### I2 — `/admin/autores` (plural): recurso órfão no API Gateway
 
-Cognito (`modules/cognito/`), API Gateway (`modules/api-gateway/`, 900+ linhas) além do que já foi lido no Bloco 2 (wiring do `media_upload_post`), FinOps, Observability (dashboards/SLO/canary) e Admin (bucket/CloudFront do painel) não tiveram leitura linha a linha nesta rodada — candidatos a uma Rodada 2 dedicada se o Codex ou uma sessão futura apontar necessidade real.
+Declarado com o comentário "(plural - for create/list)", mas nenhum método/integração foi conectado a ele em lugar nenhum do arquivo. Confirmado contra o resto do código: a UI do admin não tem funcionalidade de listagem de autores (`AUTHOR_ID` fixo em `usePostForm.ts`/`AuthorEditView.vue`), e `authorsApi` (admin/src/services/api.ts) não tem `.list()`. Não é risco de segurança (API Gateway responde "Missing Authentication Token" padrão, igual a qualquer path não definido) — é infraestrutura morta ou scaffolding esquecido. Comentário corrigido para não afirmar uma funcionalidade que não existe; decisão de manter ou remover o recurso em si fica para Marcelo (mudança de infra, não só documentação).
 
-## Avaliação por critério (parcial, proporcional ao que foi lido)
+## Verificado sem achado novo
 
-| Eixo | Nota | Base |
-|---|---:|---|
-| Segurança/AppSec (Least-Privilege IAM) | 8.5 | Amostra positiva, não cobertura completa |
-| Segurança/AppSec (Configuração Segura da Plataforma) | 8.0 | CSP com tradeoff documentado, não achado |
-| Arquitetura (Observability) | — | Não avaliado nesta rodada |
+- **Cognito**: política de senha 12 chars + complexidade (compensação documentada pela ausência de MFA, decisão já tomada em auditoria anterior), `ALLOW_USER_PASSWORD_AUTH` já removido, só SRP + refresh token, nenhum auto-cadastro.
+- **FinOps**: SNS com KMS gerenciado, budget via console manual documentado (limitação real do provider Terraform, não omissão).
+- **Admin (S3+CloudFront)**: bucket privado com OAC, versionamento habilitado, headers de segurança reais via resposta HTTP (não meta tags, que não funcionam para X-Frame-Options/HSTS), CSP com `unsafe-inline` em `style-src` justificado por dependência real do Tiptap/Tippy.js — mesma classe de decisão documentada do Bloco 4 anterior (frontend), não achado novo.
+- **API Gateway** (951 linhas completas): todo endpoint `/admin/*` real (exceto `/admin/session`, que valida por dentro do handler, com razão documentada) usa `authorization = "CUSTOM"` consistentemente; CORS preflight unificado via `for_each` com `moved` blocks preservando estado; rate limit mais apertado no login (5 rps/10 burst) contra o throttle geral (100/200); trigger de redeploy via hash do arquivo inteiro (evita o bug documentado de esquecer um recurso na lista antiga).
+- **Observability**: alarmes de burn-rate seguem o padrão real do Google SRE Workbook (multiwindow, multi-burn-rate, composite alarm evitando flapping), `treat_missing_data` escolhido corretamente em direções opostas para os dois casos (SLO de tráfego: `notBreaching` quando não há tráfego; canary: `breaching` quando o heartbeat não reporta — ausência de dado de monitoramento ativo é, em si, uma falha). Canary IAM escopado ao necessário, bucket de artefatos privado.
+- **Security-monitoring**: CloudTrail com validação de arquivo de log habilitada, bucket com bloqueio público completo, GuardDuty gated por custo.
 
-**Nota geral: não calculada** — amostra parcial demais para uma nota ponderada honesta cobrindo os 9 módulos. Registrado como `Open question` para decidir se vale uma Rodada 2 dedicada de infra antes de a nota deste bloco ser considerada real.
+## Avaliação por critério
+
+| Eixo | Critério | Nota |
+|---|---|---:|
+| Segurança/AppSec | Least-Privilege IAM | 9.0 |
+| Segurança/AppSec | Configuração Segura da Plataforma | 8.5 |
+| Qualidade de Engenharia | Documentation Quality & Drift Control | 8.0 (I1/I2 corrigidos, 3ª ocorrência do padrão de drift) |
+| Arquitetura | Observability & Operability | 9.0 |
+| Arquitetura | Architecture Governance & Traceability | 8.0 (I2, infra não rastreada a nenhuma decisão de produto) |
+
+**Nota geral: 8.6/10** — 2 achados reais corrigidos (documentação), nenhum achado de segurança ativa.
+
+## Commit
+
+A ser referenciado no commit desta correção.

@@ -8,11 +8,13 @@ authority: normative
 
 Fonte única dos critérios de avaliação (nome, peso, definição) usados nas revisões conjuntas Claude↔Codex (`CLAUDE.md` §11). Achados de uma execução específica do protocolo (ex. uma proposta Rodada N de um PR) registram evidência de uma revisão pontual — nunca redefinem ou duplicam a tabela de pesos; apenas linkam para a seção correspondente aqui.
 
-Adaptado (não copiado) do padrão equivalente do projeto irmão `expiration-tracker` — mesmas fontes normativas de origem (ISO/IEC 25010, AWS Well-Architected, ATAM, literatura de context engineering para dev assistido por IA), mas com **6 eixos** em vez de 9: este projeto não é multi-tenant, não processa dado pessoal sensível em volume, e não tem obrigação contratual/jurídica de terceiro operando ainda — os eixos de Privacidade/LGPD aprofundada, Governança Jurídica/Contratual e Produto Multi-tenant do projeto irmão não têm correspondente proporcional aqui (`engineering-principles.md` — YAGNI). O eixo de produto do projeto irmão é substituído por um eixo próprio de conteúdo editorial, que é a unidade de risco real deste projeto.
+Adaptado (não copiado) do padrão equivalente do projeto irmão `expiration-tracker` — mesmas fontes normativas de origem (ISO/IEC 25010, AWS Well-Architected, ATAM, literatura de context engineering para dev assistido por IA), mas com **7 eixos** em vez de 9: este projeto não é multi-tenant e não tem obrigação contratual/jurídica de terceiro operando ainda — os eixos de Governança Jurídica/Contratual e Produto Multi-tenant do projeto irmão não têm correspondente proporcional aqui (`engineering-principles.md` — YAGNI). O eixo de produto do projeto irmão é substituído por um eixo próprio de conteúdo editorial, que é a unidade de risco real deste projeto.
+
+**Privacidade não foi eliminada, foi recalibrada (achado real, 2026-10-02, ver `docs/book/cases/CASE-008-...md`)**: a primeira versão deste documento cortou o eixo de Privacidade/LGPD do projeto irmão assumindo "sem dado pessoal sensível em volume". Pesquisa externa (LGPD aplica-se a qualquer tratamento de dado pessoal independente do porte da empresa — a única flexibilização real para pequena empresa é a dispensa de nomear DPO formal) e inspeção direta do código (`frontend/components/consent/{ConsentBanner,ConsentModal}.tsx` já gatilha Google Analytics por opt-in real, `frontend/app/{politica-de-privacidade,politica-de-cookies,termos-de-uso}` já existem, `ContactForm.tsx` já coleta dado pessoal) mostraram que a premissa estava errada: a superfície de conformidade já existe e implementada, só não era auditada por nenhum dos 6 eixos. Um eixo próprio, proporcional (4 critérios, não os 8 do projeto irmão desenhados para uma SaaS com DSR/RIPD/subprocessador em escala), foi adicionado — ver "Eixo: Privacidade e Conformidade de Dados do Visitante" abaixo.
 
 Cada eixo evolui apenas se o próprio critério se mostrar mal calibrado em uso real — registrar por que, junto com a mudança, sem reabrir a cada nova revisão sobre o mesmo eixo.
 
-**Eixos formalizados (6)**: Arquitetura, Qualidade de Engenharia, Engenharia de Contexto, Segurança da Informação e AppSec, Governança de IA, Conteúdo Editorial e Experiência do Visitante.
+**Eixos formalizados (7)**: Arquitetura, Qualidade de Engenharia, Engenharia de Contexto, Segurança da Informação e AppSec, Governança de IA, Conteúdo Editorial e Experiência do Visitante, Privacidade e Conformidade de Dados do Visitante.
 
 ---
 
@@ -73,7 +75,7 @@ Avalia confidencialidade/integridade/disponibilidade do site e do admin diante d
 | 3 | Least-Privilege IAM & Contenção de Blast Radius | 14% | Cada Lambda com permissão mínima necessária (`infra/modules/lambda/`), sem grant implícito/curinga. |
 | 4 | Validação de Entrada & Fail-Closed | 12% | Validação server-side por contrato Zod em toda borda (HTTP, admin); entrada inválida falha de modo fechado. |
 | 5 | Configuração Segura da Plataforma | 12% | CloudFront/API Gateway/S3/Cognito com defaults seguros (CSP, CORS restrito, sem bucket público indevido). |
-| 6 | Proteção de Dados & Segredos | 10% | Segredos fora de código/log/artefato; dado de formulário de contato tratado com minimização proporcional ao estágio do projeto. |
+| 6 | Proteção de Dados & Segredos | 10% | Segredos fora de código/log/artefato; dado pessoal em trânsito/repouso protegido tecnicamente (criptografia, acesso restrito) — finalidade e minimização do dado são avaliadas no eixo de Privacidade, não duplicadas aqui. |
 | 7 | Logging Seguro & Detecção | 8% | Falha de autorização/configuração produz log acionável, sem vazar detalhe interno ao cliente. |
 | 8 | Dependency & Supply-Chain Security | 8% | `npm audit`, Semgrep, Gitleaks, Trivy rodando como gate real (`quality-gate-tiers.md`), não informacional. |
 
@@ -103,6 +105,17 @@ Avalia o conteúdo e a jornada do visitante do site — substitui o eixo de "pro
 | 5 | Consistência do Design System | 14% | Componente novo reutiliza o design system existente (`frontend/docs/design-system.md`) em vez de criar variação isolada. |
 | 6 | Transparência de Autoria & Confiabilidade do Conteúdo | 10% | Autoria, data e revisão de conteúdo publicado são rastreáveis — relevante para um blog de autoridade técnica. |
 | 7 | Administração & Operação sob a Ótica do Autor | 8% | O admin permite ao autor publicar/corrigir/despublicar com confiança, sem comportamento surpreendente (ex. falso-409 em saves consecutivos). |
+
+## Eixo: Privacidade e Conformidade de Dados do Visitante
+
+Avalia a conformidade legal e a finalidade do tratamento de dado pessoal do visitante — distinto do eixo de Segurança/AppSec (que cobre a proteção técnica, criptografia e controle de acesso do mesmo dado, não duplicado aqui). Adicionado em 2026-10-02 (ver nota acima e `CASE-008`) depois de confirmar, por pesquisa externa e inspeção de código, que a superfície já existe de verdade (consentimento de cookies/analytics, política de privacidade, formulário de contato) e não tinha nenhum eixo avaliando-a.
+
+| # | Critério | Peso | Definição |
+|---:|---|---:|---|
+| 1 | Consentimento Real Antes de Rastreamento | 35% | Google Analytics (`ConsentModal.tsx`) só dispara após opt-in explícito e não pré-marcado; recusar/revogar o consentimento interrompe o rastreamento de fato, não apenas oculta o banner. Maior peso do eixo — é o ponto de falha mais direto e verificável tecnicamente. |
+| 2 | Política de Privacidade Corresponde ao Fluxo Real de Dado | 30% | O texto publicado em `politica-de-privacidade` descreve com precisão o que o código de fato coleta/processa/compartilha (formulário de contato, cookies, analytics, provedores terceiros) — não uma política genérica desatualizada em relação ao código. |
+| 3 | Minimização e Propósito do Formulário de Contato | 20% | Dado coletado em `ContactForm.tsx` tem finalidade clara e documentada, sem campo supérfluo, sem retenção indefinida sem justificativa. |
+| 4 | Canal de Direitos do Titular | 15% | Existe forma real (e divulgada) de um titular pedir acesso/correção/exclusão do próprio dado — obrigatório mesmo para pequena empresa, mesmo com a dispensa de nomear um DPO formal. |
 
 ## Como adicionar um novo eixo
 

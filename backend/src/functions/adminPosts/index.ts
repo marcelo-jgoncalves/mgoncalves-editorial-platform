@@ -10,7 +10,7 @@ import { invalidatePostCache } from "../../common/cacheInvalidation";
 import { isConditionalCheckFailure } from "../../common/dynamoErrors";
 import { requireEnv } from "../../common/env";
 import { parseJsonBody } from "../../common/httpBody";
-import { parsePostItem } from "../../common/postPersistence";
+import { parsePostItem, parsePostListItems } from "../../common/postPersistence";
 
 const TABLE_NAME = requireEnv("POSTS_TABLE");
 const ADMIN_ORIGIN = requireEnv("ADMIN_ORIGIN");
@@ -43,7 +43,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
   try {
     if (httpMethod === "GET" && !slug) {
-      return await listPosts();
+      return await listPosts(requestId);
     }
 
     if (httpMethod === "GET" && slug) {
@@ -104,7 +104,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
   }
 };
 
-async function listPosts() {
+async function listPosts(requestId?: string) {
   const statuses = ["Publicado", "Rascunho", "Programado"];
 
   const results = await Promise.all(
@@ -122,7 +122,8 @@ async function listPosts() {
     )
   );
 
-  const allItems = results.flatMap((r) => r.Items || []);
+  const rawItems = results.flatMap((r) => r.Items || []);
+  const allItems = parsePostListItems(rawItems, { requestId });
 
   return {
     statusCode: 200,

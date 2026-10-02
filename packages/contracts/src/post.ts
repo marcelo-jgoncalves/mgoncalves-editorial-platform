@@ -231,3 +231,28 @@ export const postEntitySchema = z.object({
 });
 
 export type Post = z.infer<typeof postEntitySchema>;
+
+// Shape of a post as returned by a GSI Query in getPosts/index.ts (StatusPorData,
+// CategoriaPorData, ProjetoPorData_v2, PopularesPorData_v2) and adminPosts'
+// listPosts() — never the full item, because `projection_type = INCLUDE`
+// (infra/modules/dynamodb/main.tf) only copies a subset of attributes into
+// each index. postEntitySchema can't validate these results directly: it
+// requires fields (e.g. conteudo_html) no GSI projects.
+//
+// Required fields below are the ones confirmed present in EVERY one of the 4
+// GSIs' non_key_attributes list (cross-referenced against main.tf during the
+// Block 1 audit, docs/book/cases/CASE-008): slug (table PK, always
+// auto-projected), status, categoria_slug, titulo. Everything else
+// (autor_id, e_popular, e_projeto, version, tempo_leitura_min,
+// subcategoria_nome, data_atualizacao, ...) is present in some GSIs but not
+// others, so it stays optional here — matches frontend/components/ui/PostCard.tsx's
+// own PostCardProps, which already treats everything except slug/titulo/
+// categoria_slug as optional.
+export const postListItemSchema = postEntitySchema.partial().required({
+  slug: true,
+  titulo: true,
+  categoria_slug: true,
+  status: true,
+});
+
+export type PostListItem = z.infer<typeof postListItemSchema>;

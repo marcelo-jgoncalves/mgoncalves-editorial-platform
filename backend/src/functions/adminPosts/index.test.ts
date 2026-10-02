@@ -98,9 +98,9 @@ describe('adminPosts handler', () => {
 
   describe('GET /admin/posts (list all)', () => {
     it('queries all three statuses and merges results', async () => {
-      const published = { slug: 'a', status: 'Publicado' };
-      const draft = { slug: 'b', status: 'Rascunho' };
-      const scheduled = { slug: 'c', status: 'Programado' };
+      const published = { slug: 'a', status: 'Publicado', titulo: 'A', categoria_slug: 'aws' };
+      const draft = { slug: 'b', status: 'Rascunho', titulo: 'B', categoria_slug: 'aws' };
+      const scheduled = { slug: 'c', status: 'Programado', titulo: 'C', categoria_slug: 'aws' };
 
       mockSend
         .mockResolvedValueOnce({ Items: [published] })
@@ -127,9 +127,9 @@ describe('adminPosts handler', () => {
 
     it('envia as 3 queries em paralelo — todas chegam mesmo que uma retorne vazio', async () => {
       mockSend
-        .mockResolvedValueOnce({ Items: [{ slug: 'a', status: 'Publicado' }] })
+        .mockResolvedValueOnce({ Items: [{ slug: 'a', status: 'Publicado', titulo: 'A', categoria_slug: 'aws' }] })
         .mockResolvedValueOnce({ Items: [] })
-        .mockResolvedValueOnce({ Items: [{ slug: 'c', status: 'Programado' }] });
+        .mockResolvedValueOnce({ Items: [{ slug: 'c', status: 'Programado', titulo: 'C', categoria_slug: 'aws' }] });
 
       const result = await handler(event({ httpMethod: 'GET' }), ctx, jest.fn());
       const body = JSON.parse(result?.body ?? '{}');

@@ -1,4 +1,4 @@
-import { createPostInputSchema, updatePostInputSchema } from './post';
+import { createPostInputSchema, updatePostInputSchema, postListItemSchema } from './post';
 
 const BASE = {
   slug: 'meu-post',
@@ -206,5 +206,45 @@ describe('updatePostInputSchema', () => {
     expect(result.success).toBe(true);
     expect(result.success && result.data.subtitulo).toBeNull();
     expect(result.success && result.data.imagem_lqip_base64).toBeNull();
+  });
+});
+
+// Found during the Block 1 audit (docs/book/cases/CASE-008): GSI Query
+// results (getPosts/index.ts) only project a subset of fields, so
+// postEntitySchema can't validate them directly — this is the relaxed
+// schema used instead, with only the 4 fields confirmed present in every
+// one of the 4 GSIs' projections (infra/modules/dynamodb/main.tf) required.
+describe('postListItemSchema', () => {
+  it('accepts an item with only the 4 fields guaranteed by every GSI projection', () => {
+    const result = postListItemSchema.safeParse({
+      slug: 'meu-post',
+      titulo: 'Meu Post',
+      categoria_slug: 'aws',
+      status: 'Publicado',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects an item missing categoria_slug (real gap found before this schema existed)', () => {
+    const result = postListItemSchema.safeParse({ slug: 'meu-post', titulo: 'Meu Post', status: 'Publicado' });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects an item missing status', () => {
+    const result = postListItemSchema.safeParse({ slug: 'meu-post', titulo: 'Meu Post', categoria_slug: 'aws' });
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts the optional GSI-specific fields when present, without requiring them', () => {
+    const result = postListItemSchema.safeParse({
+      slug: 'meu-post',
+      titulo: 'Meu Post',
+      categoria_slug: 'aws',
+      status: 'Publicado',
+      autor_id: 'marcelo-goncalves',
+      version: 3,
+      tempo_leitura_min: 5,
+    });
+    expect(result.success).toBe(true);
   });
 });

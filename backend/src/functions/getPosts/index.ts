@@ -4,6 +4,7 @@ import { dynamo } from "../../common/dynamodb";
 import { logger } from "../../common/logger";
 import { getPostCounters } from "../../common/postCounters";
 import { getCategoriaNomeMap, attachCategoriaNome } from "../../common/categorias";
+import { parsePostListItems, parseFullPostItems } from "../../common/postPersistence";
 import { requireEnv } from "../../common/env";
 
 const TABLE_NAME = requireEnv("POSTS_TABLE");
@@ -109,7 +110,7 @@ async function getProjectPosts(queryParams: APIGatewayProxyEventQueryStringParam
     ? btoa(JSON.stringify(result.LastEvaluatedKey))
     : null;
   const totalCount = counters.total_projeto_publicado;
-  const posts = attachCategoriaNome(result.Items || [], categoriaMap);
+  const posts = attachCategoriaNome(parsePostListItems(result.Items || [], { requestId }), categoriaMap);
 
   logger.info("project_posts_fetched", { requestId, count: posts.length, totalCount });
   return {
@@ -151,7 +152,9 @@ async function searchPosts(term: string, queryParams: APIGatewayProxyEventQueryS
 
   const [result, categoriaMap] = await Promise.all([dynamo.send(command), getCategoriaNomeMap()]);
   const newNextToken = result.LastEvaluatedKey ? btoa(JSON.stringify(result.LastEvaluatedKey)) : null;
-  const posts = attachCategoriaNome(result.Items || [], categoriaMap);
+  // Full-item Scan (no ProjectionExpression): the stricter full schema
+  // applies here, not postListItemSchema — see parseFullPostItems' comment.
+  const posts = attachCategoriaNome(parseFullPostItems(result.Items || [], { requestId }), categoriaMap);
 
   logger.info("search_posts_fetched", { requestId, term, count: posts.length });
   return { statusCode: 200, body: JSON.stringify({ termo_busca: term, posts, nextToken: newNextToken }), headers };
@@ -172,7 +175,7 @@ async function getPopularPosts(queryParams: APIGatewayProxyEventQueryStringParam
   });
 
   const [result, categoriaMap] = await Promise.all([dynamo.send(command), getCategoriaNomeMap()]);
-  const posts = attachCategoriaNome(result.Items || [], categoriaMap);
+  const posts = attachCategoriaNome(parsePostListItems(result.Items || [], { requestId }), categoriaMap);
   logger.info("popular_posts_fetched", { requestId, count: posts.length });
   return {
     statusCode: 200,
@@ -193,7 +196,7 @@ async function getRecentPosts(queryParams: APIGatewayProxyEventQueryStringParame
     Limit: limit
   });
   const [result, categoriaMap] = await Promise.all([dynamo.send(command), getCategoriaNomeMap()]);
-  const posts = attachCategoriaNome(result.Items || [], categoriaMap);
+  const posts = attachCategoriaNome(parsePostListItems(result.Items || [], { requestId }), categoriaMap);
   logger.info("recent_posts_fetched", { requestId, count: posts.length });
   return { statusCode: 200, body: JSON.stringify({ posts }), headers };
 }
@@ -224,7 +227,7 @@ async function getAllPosts(queryParams: APIGatewayProxyEventQueryStringParameter
 
   const newNextToken = result.LastEvaluatedKey ? btoa(JSON.stringify(result.LastEvaluatedKey)) : null;
   const totalCount = counters.total_publicado;
-  const posts = attachCategoriaNome(result.Items || [], categoriaMap);
+  const posts = attachCategoriaNome(parsePostListItems(result.Items || [], { requestId }), categoriaMap);
 
   logger.info("all_posts_fetched", { requestId, count: posts.length, totalCount });
   return {
@@ -252,7 +255,8 @@ async function getPostsByCategory(categorySlug: string, queryParams: APIGatewayP
   });
 
   const [result, categoriaMap] = await Promise.all([dynamo.send(command), getCategoriaNomeMap()]);
-  const publishedPosts = (result.Items || []).filter((item) => item.status === "Publicado");
+  const validItems = parsePostListItems(result.Items || [], { requestId });
+  const publishedPosts = validItems.filter((item) => item.status === "Publicado");
   const posts = attachCategoriaNome(publishedPosts, categoriaMap);
   const newNextToken = result.LastEvaluatedKey ? btoa(JSON.stringify(result.LastEvaluatedKey)) : null;
   const categoryName = categoriaMap.get(categorySlug) || categorySlug;

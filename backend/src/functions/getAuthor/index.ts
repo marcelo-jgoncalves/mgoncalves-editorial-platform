@@ -1,7 +1,7 @@
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { dynamo } from "../../common/dynamodb";
-import { Autor } from "../../common/types";
+import { parseAutorItem } from "../../common/autorPersistence";
 import { logger } from "../../common/logger";
 import { requireEnv } from "../../common/env";
 
@@ -28,8 +28,9 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
       return { statusCode: 404, body: JSON.stringify({ message: "Autor não encontrado" }), headers };
     }
 
+    const autor = parseAutorItem(result.Item, { requestId, autorId: id });
     logger.info("author_fetched", { requestId, authorId: id });
-    return { statusCode: 200, body: JSON.stringify({ autor: result.Item as Autor }), headers };
+    return { statusCode: 200, body: JSON.stringify({ autor }), headers };
 
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

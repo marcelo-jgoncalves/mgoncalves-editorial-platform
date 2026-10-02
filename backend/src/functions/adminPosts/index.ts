@@ -10,7 +10,7 @@ import { invalidatePostCache } from "../../common/cacheInvalidation";
 import { isConditionalCheckFailure } from "../../common/dynamoErrors";
 import { requireEnv } from "../../common/env";
 import { parseJsonBody } from "../../common/httpBody";
-import { parsePostItem } from "../../common/postPersistence";
+import { parsePostItem, parsePostListItems } from "../../common/postPersistence";
 
 const TABLE_NAME = requireEnv("POSTS_TABLE");
 const ADMIN_ORIGIN = requireEnv("ADMIN_ORIGIN");
@@ -43,7 +43,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
   try {
     if (httpMethod === "GET" && !slug) {
-      return await listPosts();
+      return await listPosts(requestId);
     }
 
     if (httpMethod === "GET" && slug) {
@@ -84,7 +84,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
     // deletePost() for why the version read by the backend at request time
     // isn't enough on its own.
     if (httpMethod === "DELETE" && slug) {
-      return await deletePost(slug, queryStringParameters?.version);
+      return await deletePost(slug, queryStringParameters?.version, requestId);
     }
 
     return {
@@ -104,7 +104,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
   }
 };
 
-async function listPosts() {
+async function listPosts(requestId?: string) {
   const statuses = ["Publicado", "Rascunho", "Programado"];
 
   const results = await Promise.all(
@@ -122,7 +122,8 @@ async function listPosts() {
     )
   );
 
-  const allItems = results.flatMap((r) => r.Items || []);
+  const rawItems = results.flatMap((r) => r.Items || []);
+  const allItems = parsePostListItems(rawItems, { requestId });
 
   return {
     statusCode: 200,
@@ -174,9 +175,10 @@ async function savePost(rawData: unknown, isNew: boolean, requestId?: string, ur
   // (a genuinely partial PATCH may omit it), and urlSlug is already the only
   // source of truth for which item an update targets (see the comment on
   // `item.slug` below).
-  const existing = isNew
+  const existingItem = isNew
     ? undefined
-    : (await dynamo.send(new GetCommand({ TableName: TABLE_NAME, Key: { slug: urlSlug } }))).Item as Post | undefined;
+    : (await dynamo.send(new GetCommand({ TableName: TABLE_NAME, Key: { slug: urlSlug } }))).Item;
+  const existing = existingItem ? parsePostItem(existingItem, { requestId, slug: urlSlug }) : undefined;
 
   // Cheap early exit for the common (non-racing) case: the Get above already
   // tells us the post is gone, so there's no reason to sanitize HTML and
@@ -304,7 +306,7 @@ async function savePost(rawData: unknown, isNew: boolean, requestId?: string, ur
   };
 }
 
-async function deletePost(slug: string, clientVersionRaw?: string) {
+async function deletePost(slug: string, clientVersionRaw?: string, requestId?: string) {
   // Required, not optional: a version read by this handler off DynamoDB
   // right before the delete only protects the race between that read and
   // this write, not whether the user actually saw the version they're
@@ -320,11 +322,13 @@ async function deletePost(slug: string, clientVersionRaw?: string) {
     return { statusCode: 400, body: JSON.stringify({ message: "version must be a non-negative integer" }), headers };
   }
 
-  const existing = (await dynamo.send(new GetCommand({ TableName: TABLE_NAME, Key: { slug } }))).Item as Post | undefined;
+  const existingItem = (await dynamo.send(new GetCommand({ TableName: TABLE_NAME, Key: { slug } }))).Item;
 
-  if (!existing) {
+  if (!existingItem) {
     return { statusCode: 404, body: JSON.stringify({ message: "Post not found" }), headers };
   }
+
+  const existing = parsePostItem(existingItem, { requestId, slug });
 
   // The leading attribute_exists(slug) is load-bearing, not redundant: once
   // the first delete in a race removes the item, "attribute_not_exists(version)"

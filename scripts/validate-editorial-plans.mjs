@@ -33,12 +33,21 @@ const RECEIPTS_DIR = path.join(REPO_ROOT, 'editorial', 'receipts');
 // Real publication_ids from editorial/receipts/*.yml, used to confirm a
 // plan's publication_receipt points at a receipt that actually exists
 // instead of just being a non-empty string (see validateFile below).
-function knownReceiptIds() {
+export function knownReceiptIds(receiptsDir = RECEIPTS_DIR) {
   const ids = new Set();
-  if (!existsSync(RECEIPTS_DIR)) return ids;
-  for (const entry of readdirSync(RECEIPTS_DIR)) {
+  if (!existsSync(receiptsDir)) return ids;
+  for (const entry of readdirSync(receiptsDir)) {
     if (!entry.endsWith('.yml') && !entry.endsWith('.yaml')) continue;
-    const match = readFileSync(path.join(RECEIPTS_DIR, entry), 'utf8').match(/^publication_id:\s*(\S+)/m);
+    // Strips an optional surrounding quote (single or double): a receipt
+    // author writing `publication_id: "PUB-2026-001"` in YAML is valid and
+    // common, but a plain publication_receipt reference in a plan's front
+    // matter is never quoted (see validateFile's receiptIds.has() check) -
+    // without stripping, the captured id would carry the literal quote
+    // characters and never match. No receipt exists yet to have hit this in
+    // practice (publication-receipt.schema.json: "stub contract, no real
+    // integration exists yet"), found by reading the regex against the
+    // schema's expected format rather than against an existing failure.
+    const match = readFileSync(path.join(receiptsDir, entry), 'utf8').match(/^publication_id:\s*["']?([^"'\s]+)["']?/m);
     if (match) ids.add(match[1]);
   }
   return ids;

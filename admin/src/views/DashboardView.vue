@@ -187,7 +187,15 @@ async function bulkDelete() {
 
 async function bulkPublish() {
   try {
-    await Promise.all(selected.value.map(slug => postsApi.update(slug, { status: 'Publicado' })))
+    // version is required by updatePostInputSchema (optimistic concurrency) -
+    // every call here 400'd before this fix, found during the Block 6 full
+    // audit (docs/book/cases/CASE-008) because no test exercised this button.
+    // Same `?? 0` fallback bulkDelete already used correctly for legacy posts
+    // saved before the version field existed.
+    await Promise.all(selected.value.map(slug => {
+      const post = posts.value.find(p => p.slug === slug)
+      return postsApi.update(slug, { status: 'Publicado', version: post?.version ?? 0 })
+    }))
     await fetchPosts()
     showToast('Posts publicados')
     clearSelection()

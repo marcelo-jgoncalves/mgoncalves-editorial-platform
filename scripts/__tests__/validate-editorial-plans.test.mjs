@@ -9,6 +9,7 @@ import {
   parseFrontMatter,
   validateFile,
   resolveDiffRange,
+  knownReceiptIds,
 } from '../validate-editorial-plans.mjs';
 
 function compileSchema() {
@@ -151,6 +152,41 @@ test('lifecycle: published with a fabricated publication_receipt fails (not just
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+// Found during the full-audit pass on Block 7 (docs/book/cases/CASE-008):
+// knownReceiptIds() had zero test coverage anywhere (the lifecycle tests
+// above build the receiptIds Set by hand, never through the real function
+// that reads editorial/receipts/*.yml). The gap this closes: the function's
+// own regex would have carried a literal quote character into the captured
+// id if a receipt YAML quoted publication_id, never matching the plan's
+// unquoted reference - latent because no real receipt file exists yet.
+test('knownReceiptIds: reads an unquoted publication_id from a real receipt file', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'editorial-receipts-test-'));
+  try {
+    writeFileSync(path.join(dir, 'rec-1.yml'), 'publication_id: PUB-2026-001\nother_field: x\n');
+    const ids = knownReceiptIds(dir);
+    assert.ok(ids.has('PUB-2026-001'));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('knownReceiptIds: reads a quoted publication_id without keeping the quote characters', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'editorial-receipts-test-'));
+  try {
+    writeFileSync(path.join(dir, 'rec-1.yml'), 'publication_id: "PUB-2026-002"\n');
+    const ids = knownReceiptIds(dir);
+    assert.ok(ids.has('PUB-2026-002'));
+    assert.ok(!ids.has('"PUB-2026-002"'));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('knownReceiptIds: returns an empty set when the receipts directory does not exist', () => {
+  const ids = knownReceiptIds(path.join(tmpdir(), 'does-not-exist-' + Date.now()));
+  assert.equal(ids.size, 0);
 });
 
 test('lifecycle: published with a real, known publication_receipt passes', () => {

@@ -10,9 +10,14 @@ resource "aws_api_gateway_rest_api" "main" {
 
 # Lambda Authorizer (REQUEST): replaces the old native COGNITO_USER_POOLS
 # authorizer (removed after the BFF rollout was validated end to end) on
-# every protected /admin/* route. Supports the opaque session cookie (BFF,
-# new flow) and Authorization Bearer (Amplify client-side, legacy flow kept
-# during the transition), see backend/src/functions/adminAuthorizer.
+# every protected /admin/* route. Only the opaque session cookie (BFF) is
+# accepted today - the Authorization Bearer fallback (Amplify client-side,
+# legacy flow) was already removed from adminAuthorizer's own code (see
+# backend/src/functions/adminAuthorizer/index.ts's header comment and its
+# "Bearer sem cookie é Deny" test) - this comment described the transition
+# period, found stale during the Block 4 full audit (docs/book/cases/CASE-008).
+# identity_source stays "" regardless (see below): the authorizer still needs
+# to be invoked even when no cookie is present, to return its own Deny.
 # Cache TTL = 0: session revocation (logout, manual deletion) needs to take
 # effect immediately, never serve a cached Allow decision for a session
 # that's already been deleted.
@@ -163,7 +168,16 @@ resource "aws_api_gateway_method" "get_post" {
 # --- Admin Resources ---
 
 
-# /admin/autores (plural - for create/list)
+# /admin/autores (plural): declared, but no method/integration was ever
+# attached to it - found orphaned during the Block 4 full audit
+# (docs/book/cases/CASE-008). The admin UI has no author-list feature (single
+# fixed AUTHOR_ID constant, admin/src/views/AuthorEditView.vue) and
+# admin/src/services/api.ts's authorsApi has no list(). Kept as-is (not
+# deleted) pending a product decision: either a real list/create feature is
+# planned and this is intentional scaffolding, or it's dead infrastructure to
+# remove. Not a security or functional risk either way - API Gateway returns
+# its default "Missing Authentication Token" for any request here, the same
+# as any undefined path.
 resource "aws_api_gateway_resource" "admin_autores" {
   rest_api_id = aws_api_gateway_rest_api.main.id
   parent_id   = aws_api_gateway_resource.admin.id

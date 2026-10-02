@@ -44,9 +44,11 @@ export default function PostFooter({ author, social }: PostFooterProps) {
                 <FontAwesomeIcon icon={faGithub} aria-hidden="true" />
               </a>
             )}
-            <a href={social?.instagram_url || '#'} aria-label="Instagram" target="_blank" rel="noopener noreferrer author">
-              <FontAwesomeIcon icon={faInstagram} aria-hidden="true" />
-            </a>
+            {social?.instagram_url && (
+              <a href={social.instagram_url} aria-label="Instagram" target="_blank" rel="noopener noreferrer author">
+                <FontAwesomeIcon icon={faInstagram} aria-hidden="true" />
+              </a>
+            )}
           </div>
         </div>
       )}

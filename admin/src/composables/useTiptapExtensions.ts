@@ -98,7 +98,20 @@ export function buildTiptapExtensions(onRequestImage: () => void) {
     ClosingFlourish,
     SmartImage.configure({
       inline: false,
-      allowBase64: true,
+      // allowBase64 was true: Tiptap's native paste/drop handler embeds a
+      // pasted screenshot or dropped file as a data: URI directly, bypassing
+      // mediaApi's presigned-upload flow entirely. Confirmed real and silent:
+      // backend/src/common/sanitizer.ts's ALLOWED_SCHEMES (http/https/mailto
+      // only) strips a data: img src on save, leaving an <img> with no src -
+      // a broken image on the published post, with zero error shown to the
+      // admin. Found during the Block 6 full audit (docs/book/cases/
+      // CASE-008) by testing the real sanitize-html call, not assuming.
+      // false forces every image through the real upload pipeline
+      // (mediaUpload presigned POST -> S3 -> imageProcessor variants), which
+      // is also what keeps conteudo_html under its 300_000-char schema limit
+      // (packages/contracts/src/post.ts) - a base64 screenshot alone can
+      // approach or exceed that on its own.
+      allowBase64: false,
     }),
     Code.configure({
       HTMLAttributes: {

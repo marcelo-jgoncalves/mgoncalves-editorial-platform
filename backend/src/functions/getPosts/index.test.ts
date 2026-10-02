@@ -45,8 +45,8 @@ function event(overrides: Partial<APIGatewayProxyEvent> = {}): APIGatewayProxyEv
   };
 }
 
-const POST_A = { slug: 'post-a', status: 'Publicado', titulo: 'Post A' };
-const POST_B = { slug: 'post-b', status: 'Publicado', titulo: 'Post B' };
+const POST_A = { slug: 'post-a', status: 'Publicado', titulo: 'Post A', categoria_slug: 'aws' };
+const POST_B = { slug: 'post-b', status: 'Publicado', titulo: 'Post B', categoria_slug: 'aws' };
 
 beforeAll(() => {
   process.env.POSTS_TABLE = 'test-posts-table';
@@ -223,7 +223,7 @@ describe('getPosts handler', () => {
     });
 
     it('filtra apenas posts Publicado em memória', async () => {
-      const draft = { slug: 'draft', status: 'Rascunho', titulo: 'Draft' };
+      const draft = { slug: 'draft', status: 'Rascunho', titulo: 'Draft', categoria_slug: 'aws' };
       mockSend.mockResolvedValueOnce({ Items: [POST_A, draft] });
 
       const result = await handler(
@@ -359,6 +359,21 @@ describe('getPosts handler', () => {
       const body = JSON.parse(result?.body ?? '{}');
       expect(body.posts).toHaveLength(2);
       expect(body.totalCount).toBe(2);
+    });
+
+    // The point of A2 (docs/book/cases/CASE-008): one malformed item in a
+    // GSI result must not 500 the whole public listing for every visitor.
+    it('drops a malformed item (missing categoria_slug) and still returns the valid ones', async () => {
+      const malformed = { slug: 'post-c', status: 'Publicado', titulo: 'Post C' }; // no categoria_slug
+      mockSend.mockResolvedValueOnce({ Items: [POST_A, malformed, POST_B] });
+      mockSend.mockResolvedValueOnce({ Item: { total_publicado: 3 } });
+
+      const result = await handler(event(), ctx, jest.fn());
+
+      expect(result?.statusCode).toBe(200);
+      const body = JSON.parse(result?.body ?? '{}');
+      expect(body.posts).toHaveLength(2);
+      expect(body.posts.map((p: { slug: string }) => p.slug)).toEqual(['post-a', 'post-b']);
     });
 
     it('uses StatusPorData GSI with default limit 9', async () => {

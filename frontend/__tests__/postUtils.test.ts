@@ -165,4 +165,28 @@ describe('extração de headings (TOC)', () => {
     const { contentHtml } = await processFullPostContent('<p>a</p><h2>Seção Um</h2><p>b</p><p>c</p>');
     expect(contentHtml).toContain('<h2 id="secao-um"');
   });
+
+  // Found during the Block 5 full audit (docs/book/cases/CASE-008): two H2s
+  // with identical text (a real pattern, e.g. "Conclusão" reused across
+  // sections of a longer post) used to collide on the same id, which is
+  // invalid HTML and breaks TableOfContents.tsx's getElementById-based
+  // click/scroll-spy (it always resolves to the FIRST element with that id).
+  it('desambigua ids quando dois h2 têm o mesmo texto', async () => {
+    const html = '<p>a</p><h2>Conclusão</h2><p>b</p><h2>Conclusão</h2><p>c</p><p>d</p>';
+    const { headings, contentHtml } = await processFullPostContent(html);
+
+    expect(headings).toHaveLength(2);
+    expect(headings[0].id).toBe('conclusao');
+    expect(headings[1].id).toBe('conclusao-1');
+    expect(headings[0].id).not.toBe(headings[1].id);
+
+    expect(contentHtml).toContain('id="conclusao"');
+    expect(contentHtml).toContain('id="conclusao-1"');
+  });
+
+  it('desambigua 3+ ocorrências em sequência (conclusao, conclusao-1, conclusao-2)', async () => {
+    const html = '<p>a</p><h2>X</h2><p>b</p><h2>X</h2><p>c</p><h2>X</h2><p>d</p><p>e</p>';
+    const { headings } = await processFullPostContent(html);
+    expect(headings.map((h) => h.id)).toEqual(['x', 'x-1', 'x-2']);
+  });
 });

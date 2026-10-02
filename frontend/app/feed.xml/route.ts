@@ -12,6 +12,16 @@ interface FeedPost {
   data_publicacao?: string;
 }
 
+// A literal "]]>" inside a CDATA section closes it early, same class of
+// issue as HTML/script breakout - found during the Block 5 full audit
+// (docs/book/cases/CASE-008). Low real-world risk (only the trusted admin
+// sets titulo/resumo, no public submission path), but the fix is the
+// standard, cheap CDATA-escaping trick: split the sequence across two
+// adjacent CDATA sections so the content is reassembled by the XML parser.
+function escapeCdata(value: string): string {
+  return value.replace(/]]>/g, ']]]]><![CDATA[>');
+}
+
 export async function GET() {
   const data = await getAllPosts(undefined, 20).catch(() => ({ posts: [], nextToken: undefined }));
   const posts: FeedPost[] = data.posts || [];
@@ -25,13 +35,13 @@ export async function GET() {
 
       return [
         '    <item>',
-        `      <title><![CDATA[${post.titulo || ''}]]></title>`,
+        `      <title><![CDATA[${escapeCdata(post.titulo || '')}]]></title>`,
         `      <link>${link}</link>`,
         `      <guid isPermaLink="true">${link}</guid>`,
-        `      <description><![CDATA[${post.resumo || ''}]]></description>`,
+        `      <description><![CDATA[${escapeCdata(post.resumo || '')}]]></description>`,
         `      <pubDate>${pubDate}</pubDate>`,
         post.categoria_slug
-          ? `      <category><![CDATA[${post.categoria_slug}]]></category>`
+          ? `      <category><![CDATA[${escapeCdata(post.categoria_slug)}]]></category>`
           : '',
         '    </item>',
       ]

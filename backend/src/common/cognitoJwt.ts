@@ -1,10 +1,11 @@
 //
 // Verifies Cognito ID Tokens against the User Pool's public JWKS: requires
 // no IAM permission (it's a public HTTPS call, with internal key caching
-// done by aws-jwt-verify itself). Used in 2 places: adminSession (login:
-// exchanges the idToken from Amplify's client-side SRP for an opaque
-// session) and adminAuthorizer (legacy fallback: Authorization Bearer,
-// kept during the admin's transition to the cookie flow).
+// done by aws-jwt-verify itself). Used only by adminSession's login step
+// (exchanges the idToken from Amplify's client-side SRP for an opaque
+// session) — adminAuthorizer's own legacy Authorization Bearer fallback was
+// already removed (see its header comment), so this is no longer called
+// from there.
 
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 

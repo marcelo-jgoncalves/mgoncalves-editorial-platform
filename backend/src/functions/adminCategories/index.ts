@@ -1,30 +1,14 @@
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { ScanCommand, GetCommand, PutCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
-import { z } from "zod";
+import { categoriaInputSchema } from "@mgoncalves/contracts";
 import { dynamo } from "../../common/dynamodb";
+import { parseCategoriaItem } from "../../common/categoriaPersistence";
 import { logger } from "../../common/logger";
 import { isConditionalCheckFailure } from "../../common/dynamoErrors";
 import { requireEnv } from "../../common/env";
 import { parseJsonBody } from "../../common/httpBody";
 
 const TABLE_NAME = requireEnv("CATEGORIAS_TABLE");
-
-// Same anti-mass-assignment contract as postInputSchema (common/postSchema.ts):
-// .strip() discards any field outside this allowlist before it reaches
-// DynamoDB. icone_fa/descricao_seo are edited by the admin form even though
-// the public frontend doesn't consume them yet: dropping them here would
-// silently destroy admin-entered data on every save.
-const categoriaInputSchema = z
-  .object({
-    categoria_slug: z.string().min(1),
-    nome: z.string().min(1),
-    descricao: z.string().optional(),
-    descricao_seo: z.string().optional(),
-    icone_fa: z.string().optional(),
-    macro_areas: z.array(z.string()).optional(),
-    subcategorias: z.array(z.object({ slug: z.string(), nome: z.string() }).strip()).optional(),
-  })
-  .strip();
 const ADMIN_ORIGIN = requireEnv("ADMIN_ORIGIN");
 
 const headers = {
@@ -88,8 +72,9 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
 async function listCategorias(requestId: string) {
   const result = await dynamo.send(new ScanCommand({ TableName: TABLE_NAME }));
-  const nomeOf = (item: Record<string, unknown>) => (typeof item.nome === "string" ? item.nome : "");
-  const items = (result.Items || []).sort((a, b) => nomeOf(a).localeCompare(nomeOf(b)));
+  const items = (result.Items || [])
+    .map((item) => parseCategoriaItem(item, { requestId }))
+    .sort((a, b) => a.nome.localeCompare(b.nome));
   logger.info("categorias_listed", { requestId, count: items.length });
   return { statusCode: 200, body: JSON.stringify({ items, count: items.length }), headers };
 }
@@ -99,8 +84,9 @@ async function getCategoria(slug: string, requestId: string) {
   if (!result.Item) {
     return { statusCode: 404, body: JSON.stringify({ message: "Categoria not found" }), headers };
   }
+  const categoria = parseCategoriaItem(result.Item, { requestId, categoriaSlug: slug });
   logger.info("categoria_fetched", { requestId, slug });
-  return { statusCode: 200, body: JSON.stringify(result.Item), headers };
+  return { statusCode: 200, body: JSON.stringify(categoria), headers };
 }
 
 async function saveCategoria(rawData: unknown, isNew: boolean, requestId: string) {

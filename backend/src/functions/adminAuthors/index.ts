@@ -1,31 +1,14 @@
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { z } from "zod";
+import { autorInputSchema } from "@mgoncalves/contracts";
 import { dynamo } from "../../common/dynamodb";
+import { parseAutorItem } from "../../common/autorPersistence";
 import { logger } from "../../common/logger";
 import { sanitizePostHtml } from "../../common/sanitizer";
 import { requireEnv } from "../../common/env";
 import { parseJsonBody } from "../../common/httpBody";
 
 const TABLE_NAME = requireEnv("AUTHORS_TABLE");
-
-// Same anti-mass-assignment contract as postInputSchema (common/postSchema.ts):
-// .strip() discards any field outside this allowlist. The explicit item
-// mapping below already acted as an allowlist, but without validation a
-// non-string value (e.g. an object in nome_exibicao) went straight to
-// DynamoDB.
-const autorInputSchema = z
-  .object({
-    autor_id: z.string().min(1).optional(),
-    nome_exibicao: z.string().min(1),
-    bio: z.string().optional(),
-    foto_avatar_url: z.string().optional(),
-    foto_avatar_alt_text: z.string().optional(),
-    linkedin_url: z.string().optional(),
-    github_url: z.string().optional(),
-    instagram_url: z.string().optional(),
-  })
-  .strip();
 const ADMIN_ORIGIN = requireEnv("ADMIN_ORIGIN");
 
 const headers = {
@@ -60,10 +43,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         return { statusCode: 404, headers, body: JSON.stringify({ error: "Author not found" }) };
       }
 
+      const autor = parseAutorItem(result.Item, { requestId, autorId: authorId });
+
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ autor: result.Item })
+        body: JSON.stringify({ autor })
       };
     }
 

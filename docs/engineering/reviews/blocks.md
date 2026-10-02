@@ -50,11 +50,14 @@ Governança de IA não se aplica a nenhum bloco de código — é sobre o proces
 
 Eixos combinados num único documento (`block-2-api-sincrona/round1-claude-proposal.md`) por eficiência. Achados: comentário desatualizado em `cognitoJwt.ts` (corrigido), garantia central de expiração de sessão nunca testada diretamente (corrigido, `adminSessionStore.test.ts` novo). `mediaUpload`/`adminSession`/`adminAuthorizer` sem lacuna de comportamento real. Nota pós-correção: 8.9/10. Commit `31d4604`. Codex: bloqueado (mesma janela).
 
+## Registro de rodadas — Bloco 3 (concluído do lado Claude)
+
+Nenhum achado novo (`block-3-pipeline-assincrono/round1-claude-proposal.md`) — `postScheduler`/`postCounterReconciler`/`imageProcessor` já bem cobertos por rodadas de auditoria anteriores (histórico em `docs/backlog.md`). Resultado honesto, sem correção aplicada. Nota: 8.7/10.
+
 ## Registro de rodadas — Blocos restantes
 
 | Bloco | Status |
 |---|---|
-| 3. Pipeline assíncrono/agendado | pendente |
 | 4. Infraestrutura (Terraform) | pendente |
 | 5. Frontend público | pendente |
 | 6. Admin SPA | pendente |

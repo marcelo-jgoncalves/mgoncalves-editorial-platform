@@ -92,9 +92,15 @@ Marcelo pediu para submeter cada bloco a todos os eixos que fizerem sentido para
 
 Nota pós-correção: 8.9/10. Commit `31d4604`.
 
-## 2.3-2.7 Demais blocos
+## 2.3 Bloco 3 (Pipeline assíncrono/agendado) — nenhum achado novo
 
-Pendente — preenchido conforme Pipeline assíncrono, Infraestrutura, Frontend público, Admin SPA e Subsistema editorial forem auditados (`docs/engineering/reviews/blocks.md`).
+`Observed fact`: `postScheduler`, `postCounterReconciler` e `imageProcessor` já tinham passado por rodadas de auditoria anteriores (histórico em `docs/backlog.md`, ex. item #23 — job de reconciliação, item #59 — DLQ ausente já aceito como risco). A leitura completa deste bloco não encontrou lacuna nova de comportamento, teste ou documentação.
+
+`AI inference`: isso é, em si, um dado relevante para a pergunta central deste caso (§6, critérios de aceitação) — nem todo bloco produz achado ao ser auditado por um eixo nomeado; um bloco que já recebeu atenção de engenharia repetida no passado tende a não produzir achado novo, o que é evidência de que a auditoria está discriminando sinal real (onde há lacuna, acha; onde não há, não força). Nota: 8.7/10, sem correção aplicada.
+
+## 2.4-2.7 Demais blocos
+
+Pendente — preenchido conforme Infraestrutura, Frontend público, Admin SPA e Subsistema editorial forem auditados (`docs/engineering/reviews/blocks.md`).
 
 # 6. Critérios de aceitação
 

@@ -21,10 +21,10 @@ Cada eixo evolui apenas se o próprio critério se mostrar mal calibrado em uso 
 | # | Critério | Peso | Definição |
 |---:|---|---:|---|
 | 1 | Domain Fit & Simplicity | 14% | A solução usa o mecanismo mais simples que resolve o problema real deste projeto (`engineering-principles.md`), sem sofisticação antecipada. |
-| 2 | Data Model & Consistency | 16% | Coerência do single-table DynamoDB, GSIs, contratos Zod (`packages/contracts`) e schema dos planos editoriais; mudança de chave/schema é tratada como nível 5-6 (`change-risk-scale.md`). |
+| 2 | Data Model & Consistency | 16% | Coerência entre as 4 tabelas DynamoDB (`posts` com 5 GSIs, `autores`, `categorias`, `admin-sessions` — não é um desenho single-table), os contratos de schema (`packages/contracts`) e o schema dos planos editoriais; mudança de chave/GSI/schema é tratada como nível 5-6 (`change-risk-scale.md`). Inclui consistência do rigor de validação em runtime na fronteira entre os diferentes contratos. |
 | 3 | Reliability & Fault Recovery | 12% | Comportamento sob falha de dependência externa (DynamoDB, S3, CloudFront, API Gateway) — retry/backoff já aplicado em `getPost()` é o precedente a seguir, não uma exceção. |
 | 4 | Security & Privacy by Design | 14% | Decisões de arquitetura já nascem considerando CSP/CORS/IAM, não como camada adicionada depois. |
-| 5 | Modifiability & Evolvability | 12% | Fronteira de módulo clara (`backend/src/functions/*`, `frontend/src/*`, `admin/src/*`, `packages/contracts`) barata de estender sem reescrever. |
+| 5 | Modifiability & Evolvability | 12% | Fronteira de módulo clara (`backend/src/functions/*`, `frontend/{app,components,lib}`, `admin/src/*`, `packages/contracts`) barata de estender sem reescrever. |
 | 6 | Observability & Operability | 10% | Diagnóstico de falha real possível via CloudWatch/logs estruturados, sem depender de reprodução manual. |
 | 7 | Cost & Resource Governance | 8% | Decisão de infra considera custo real (ex. throttle de API Gateway, concorrência reservada) antes de escalar capacidade. |
 | 8 | Testability & Delivery Safety | 8% | Design permite prova via Tier A/B (`quality-gate-tiers.md`) sem depender só de verificação manual. |

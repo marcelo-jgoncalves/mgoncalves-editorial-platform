@@ -106,9 +106,31 @@ Nota pós-correção: 8.9/10. Commit `31d4604`.
 
 `Observed fact`: a CSP do frontend usa `script-src 'self' 'unsafe-inline'`, uma fraqueza real de defesa-em-profundidade contra XSS — mas já é decisão documentada e justificada no próprio arquivo Terraform (migrar para nonce exigiria middleware por request). Não contado como achado novo por já estar sob decisão consciente, mas sinalizado para a crítica do Codex avaliar a proporcionalidade.
 
-## 2.5-2.7 Demais blocos
+## 2.5 Bloco 5 (Frontend público) — achado de verificação, não de bug
 
-Pendente — preenchido conforme Frontend público, Admin SPA e Subsistema editorial forem auditados (`docs/engineering/reviews/blocks.md`).
+Ver seção dedicada acima (achados P1/P2) — resumo: duas afirmações do próprio eixo de Privacidade ("Google Analytics já gatilha", "ContactForm já coleta dado") eram imprecisas, escritas sem ler a lógica completa de carregamento/envio. `loadScriptsByConsent()` tem o GA comentado; `submitContact()` é mock explícito. Corrigido nos critérios. Mesma classe de erro do achado "single-table" do Bloco 1 — padrão que já aparece 2 vezes nesta auditoria (`AI inference`: candidato real a princípio generalizável, ver seção 14).
+
+## 2.6 Bloco 6 (Admin SPA) — nenhum achado novo
+
+`stores/auth.ts`/`services/api.ts`/router já consistentes com o BFF auditado no Bloco 2 (nunca usa `Authorization`, sempre `credentials: 'include'`, caminho relativo documentado contra quebra de CORS); cobertura de teste já real (26 testes). Nota: 8.8/10.
+
+## 2.7 Bloco 7 (Subsistema editorial) — nenhum achado novo
+
+Contexto relevante: já tinha passado por 2 rodadas de revisão cega via Codex CLI fora deste protocolo, na mesma sessão de trabalho — declarado, não escondido. `LIFECYCLE.md` consistente consigo mesmo e com os schemas satélite. Nota: 8.7/10.
+
+## Resumo dos 7 blocos (todos concluídos do lado Claude)
+
+| Bloco | Achado real | Nota |
+|---|---|---:|
+| 1. Modelo de dados | A1/A2/A3 corrigidos + bug real (listCategorias) | 9.1 |
+| 2. API síncrona | Comentário obsoleto + lacuna de teste na expiração de sessão, ambos corrigidos | 8.9 |
+| 3. Pipeline assíncrono | Nenhum | 8.7 |
+| 4. Infraestrutura | Nenhum novo (amostra parcial declarada) | não calculada |
+| 5. Frontend público | 2 afirmações de privacidade corrigidas (verificação, não bug) | não calculada |
+| 6. Admin SPA | Nenhum | 8.8 |
+| 7. Subsistema editorial | Nenhum (já hardenizado recentemente) | 8.7 |
+
+Pendência comum a todos os 7: crítica cruzada real do Codex, bloqueada até 2026-10-03 15:20 — nenhum bloco está formalmente convergido pelo protocolo completo ainda, só auditado do lado Claude.
 
 # 6. Critérios de aceitação
 
@@ -211,10 +233,17 @@ export type Autor = z.infer<typeof autorEntitySchema>;
 ## Casos contrários ou de controle
 Os eixos de Qualidade de Engenharia, Engenharia de Contexto, Governança de IA e Conteúdo Editorial, ao serem reavaliados na mesma rodada de verificação que restaurou Privacidade, não revelaram nenhuma lacuna comparável — nem todo eixo proposto estava mal calibrado, só o que tinha sido cortado sobre uma premissa não verificada.
 
+# 14. Princípio generalizável
+
+Nomear e pesar um critério de qualidade muda o que uma auditoria de IA efetivamente procura — confirmado nos 7 blocos (§2.0-2.7): todo achado real corrigido (A1/A2/A3, Q1/Q2, S1/S2, P1/P2) foi encontrado perguntando "o critério X está satisfeito aqui?", não por leitura de código sem direção.
+
+Um segundo princípio emergiu, não previsto na primeira versão deste caso: **uma afirmação sobre comportamento de código (não sobre sua existência) só é um fato depois de ler a lógica completa que produz esse comportamento, nunca a partir do nome/existência de um arquivo ou componente.** Apareceu duas vezes nesta mesma auditoria, em registros independentes: a premissa "single-table DynamoDB" (Bloco 1, CASE-007) e as premissas "GA já gatilha"/"ContactForm já coleta dado" (Bloco 5, P1/P2) — ambas escritas por inferir comportamento a partir de nome de arquivo/componente, corrigidas só ao ler a função que efetivamente executa o comportamento alegado (`loadScriptsByConsent()`, `submitContact()`). Duas ocorrências do mesmo tipo de erro, pela mesma IA, no mesmo caso, é sinal mais forte que uma ocorrência isolada — candidato real a virar regra operacional explícita (ex. "nunca afirmar que X 'já faz Y' sem citar a função que faz Y e confirmar que não está comentada/mockada"), não só um lembrete pontual.
+
 # 15. Limites da conclusão
 
-- Este caso cobre, até o momento, a verificação inicial da régua (§2.0) e 1 de 7 blocos de 1 eixo (§2.1) — não é evidência de que todo eixo produzirá um achado igualmente concreto.
-- A validação da correção do Bloco 1 já foi confirmada (commit `ec2098b`, ver seção 6.3) — mas o caso continua `active`, não `resolved`, porque os outros 6 eixos ainda não foram auditados.
+- Este caso cobre os 7 blocos do lado Claude (§2.0-2.7) — nenhum foi submetido à crítica cruzada real do Codex ainda (bloqueado por rate-limit até 2026-10-03 15:20). A convergência do protocolo completo (`CLAUDE.md` §11) não pode ser declarada só com a proposta de um lado.
+- Os Blocos 4 e 5 foram auditados por amostragem declarada, não cobertura linha a linha completa — suas notas gerais não foram calculadas por honestidade (amostra insuficiente para uma média ponderada real).
+- A validação das correções aplicadas (Blocos 1-2) foi confirmada por teste real (commits `ec2098b`, `59abf4a`, `9961031`, `149bf19`, `31d4604`) — mas o caso continua `active`, não `resolved`, até a rodada do Codex acontecer.
 
 # 16. Questões em aberto
 

@@ -62,10 +62,14 @@ Nenhum achado novo (`block-3-pipeline-assincrono/round1-claude-proposal.md`) —
 
 `block-5-frontend-publico/round1-claude-proposal.md` — achado real de **verificação, não de bug**: `joint-review-criteria.md` afirmava que o Google Analytics "já gatilha" por opt-in e que o `ContactForm` "já coleta dado pessoal" — ambas escritas sem ler a lógica completa. Real: `loadScriptsByConsent()` tem o carregamento do GA inteiramente comentado (placeholder), e `submitContact()` é um mock explícito sem persistência. Corrigido nos próprios critérios. Amostra dirigida a consentimento/contato/privacidade, não ao bloco inteiro (SEO/performance/design system não lidos).
 
-## Registro de rodadas — Blocos restantes
+## Registro de rodadas — Bloco 6 (concluído do lado Claude)
 
-| Bloco | Status |
-|---|---|
-| 5. Frontend público | pendente |
-| 6. Admin SPA | pendente |
-| 7. Subsistema editorial | pendente |
+`block-6-admin-spa/round1-claude-proposal.md` — nenhum achado novo (`stores/auth.ts`/`services/api.ts`/router já consistentes com o BFF auditado no Bloco 2, cobertura de teste já real). Nota: 8.8/10.
+
+## Registro de rodadas — Bloco 7 (concluído do lado Claude)
+
+`block-7-subsistema-editorial/round1-claude-proposal.md` — nenhum achado novo; subsistema já passou por 2 rodadas de revisão cega via Codex CLI fora deste protocolo, na mesma sessão de trabalho (contexto declarado, não escondido). Nota: 8.7/10.
+
+## Todos os 7 blocos concluídos do lado Claude
+
+Pendência única e comum a todos: a crítica cruzada real do Codex, bloqueada por rate-limit até 2026-10-03 15:20. Nenhum bloco pode ser considerado convergido pelo protocolo completo (`CLAUDE.md` §11) até essa rodada acontecer.

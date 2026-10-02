@@ -26,7 +26,7 @@ Cada bloco tem sua própria subpasta (`block-N-<nome>/`) com os artefatos de cad
 
 | Bloco | Status | Nota final (Claude / Codex) | Rodadas |
 |---|---|---|---|
-| 1. Modelo de dados e contratos | **A1 e A3 corrigidos (commits `ec2098b`, `9961031`), crítica cruzada do Codex ainda bloqueada** por rate-limit até 2026-10-03 15:20 — achado A2 (GSI sem validação, público e admin) segue aberto, candidato real à rodada do protocolo quando o Codex liberar (ver `block-1-modelo-de-dados/`) | — | 1 (parcial) |
+| 1. Modelo de dados e contratos | **A1, A2 e A3 corrigidos (commits `ec2098b`, `59abf4a`, `9961031`) — todos os achados da proposta de Claude já aplicados.** Crítica cruzada real do Codex ainda bloqueada por rate-limit até 2026-10-03 15:20; rodada formal do protocolo pendente antes de considerar o bloco convergido (ver `block-1-modelo-de-dados/`) | — | 1 (parcial, só lado Claude) |
 | 2. API backend síncrona | pendente | — | — |
 | 3. Pipeline assíncrono/agendado | pendente | — | — |
 | 4. Infraestrutura (Terraform) | pendente | — | — |

@@ -110,9 +110,19 @@ Nota pós-correção: 8.9/10. Commit `31d4604`.
 
 Ver seção dedicada acima (achados P1/P2) — resumo: duas afirmações do próprio eixo de Privacidade ("Google Analytics já gatilha", "ContactForm já coleta dado") eram imprecisas, escritas sem ler a lógica completa de carregamento/envio. `loadScriptsByConsent()` tem o GA comentado; `submitContact()` é mock explícito. Corrigido nos critérios. Mesma classe de erro do achado "single-table" do Bloco 1 — padrão que já aparece 2 vezes nesta auditoria (`AI inference`: candidato real a princípio generalizável, ver seção 14).
 
-## 2.6 Bloco 6 (Admin SPA) — nenhum achado novo
+## 2.6 Bloco 6 (Admin SPA) — 3 bugs reais, auditoria total (não por amostra)
 
-`stores/auth.ts`/`services/api.ts`/router já consistentes com o BFF auditado no Bloco 2 (nunca usa `Authorization`, sempre `credentials: 'include'`, caminho relativo documentado contra quebra de CORS); cobertura de teste já real (26 testes). Nota: 8.8/10.
+Quando Marcelo pediu auditoria total (não por amostra), a releitura completa deste bloco — que na primeira passada só tinha coberto `auth.ts`/`api.ts`/router — encontrou 3 bugs funcionais reais que a amostra inicial não alcançou:
+
+`Observed fact`: `sanitizeHtml.ts` (admin) tinha o mesmo tipo de gap do Bloco 5 — o comentário afirmava allowlist "idêntica" ao backend, mas faltava `ALLOWED_URI_REGEXP`, aceitando esquemas (`tel:`, `sms:`, `cid:`, `xmpp:`) que o backend rejeita. Baixo risco real (só afeta a pré-visualização local), mas a 4ª ocorrência do mesmo padrão de afirmação não verificada nesta auditoria.
+
+`AI inference` verificada por teste direto: `DashboardView.vue`'s `bulkPublish()` chamava `postsApi.update(slug, { status: 'Publicado' })` sem o campo `version`, obrigatório em `updatePostInputSchema` — toda publicação em massa retornava 400 do backend. Bug real, não hipotético; não havia nenhum teste para `DashboardView.vue`.
+
+`Observed fact` confirmado com teste real contra a função `sanitize-html` do próprio projeto: o editor Tiptap tinha `allowBase64: true`, que embute uma imagem colada/arrastada como `data:` URI — o backend então remove o `src` silenciosamente ao salvar (esquema `data:` fora de `ALLOWED_SCHEMES`), deixando uma tag `<img>` sem imagem no post publicado, sem nenhum erro visível ao autor. Esse é o achado mais severo dos três: perda silenciosa de dado numa ação de edição comum (colar um print).
+
+**Correção aplicada aos 3**: comentário/esquema de URI corrigido (`31a23c3`), `bulkPublish()` corrigido com o mesmo padrão `?? 0` de `bulkDelete()` (`1492e5e`), `allowBase64` desabilitado forçando o pipeline real de upload (`b2afc12`).
+
+**Achado de processo, não de produto**: os 3 bugs viviam exatamente nos arquivos que a primeira passada (por amostra, Rodada 1 original) tinha decidido não ler — `DashboardView.vue` e `useTiptapExtensions.ts` nunca tinham sido abertos antes desta rodada completa. Isso é evidência direta a favor do pedido de Marcelo: amostragem dirigida por risco percebido pode errar exatamente onde o risco real mora. Nota pós-correção: 8.4/10 (a lacuna estrutural de `@vue/test-utils` ausente no projeto permanece registrada, não fechada).
 
 ## 2.7 Bloco 7 (Subsistema editorial) — nenhum achado novo
 

@@ -62,9 +62,9 @@ Nenhum achado novo (`block-3-pipeline-assincrono/round1-claude-proposal.md`) —
 
 `block-5-frontend-publico/round1-claude-proposal.md` — achado real de **verificação, não de bug**: `joint-review-criteria.md` afirmava que o Google Analytics "já gatilha" por opt-in e que o `ContactForm` "já coleta dado pessoal" — ambas escritas sem ler a lógica completa. Real: `loadScriptsByConsent()` tem o carregamento do GA inteiramente comentado (placeholder), e `submitContact()` é um mock explícito sem persistência. Corrigido nos próprios critérios. Amostra dirigida a consentimento/contato/privacidade, não ao bloco inteiro (SEO/performance/design system não lidos).
 
-## Registro de rodadas — Bloco 6 (concluído do lado Claude)
+## Registro de rodadas — Bloco 6 (concluído, auditoria TOTAL — não por amostra)
 
-`block-6-admin-spa/round1-claude-proposal.md` — nenhum achado novo (`stores/auth.ts`/`services/api.ts`/router já consistentes com o BFF auditado no Bloco 2, cobertura de teste já real). Nota: 8.8/10.
+`block-6-admin-spa/round1-claude-proposal.md` — releitura completa (todo `admin/src/{stores,services,router,composables,components,views}`) encontrou **3 bugs reais** que a amostra inicial (só `auth.ts`/`api.ts`/router) não alcançava: gap de esquema de URI no sanitizador local (`31a23c3`), `bulkPublish()` sempre retornando 400 por faltar `version` (`1492e5e`), e perda silenciosa de imagem colada via `allowBase64` (`b2afc12`, o achado mais severo — confirmado com teste direto contra `sanitize-html`). Nota pós-correção: 8.4/10.
 
 ## Registro de rodadas — Bloco 7 (concluído do lado Claude)
 

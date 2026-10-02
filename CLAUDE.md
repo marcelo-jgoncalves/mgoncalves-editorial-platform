@@ -82,6 +82,9 @@ Siga a política completa em `docs/engineering/standards/git-and-review-workflow
 | Arquitetura e invariantes críticos | `docs/architecture/system-overview.md` |
 | Decisões técnicas vigentes | `docs/engineering/decisions/` |
 | Padrões de engenharia (princípios, código, testes, IA, Git) | `docs/engineering/standards/` |
+| Quando o protocolo Claude↔Codex é obrigatório | `docs/engineering/standards/change-risk-scale.md` |
+| Tiers de gate de qualidade (CI/CD) | `docs/engineering/standards/quality-gate-tiers.md` |
+| Governança de IA (autoridade, incidentes) | `docs/engineering/standards/ai-governance.md` |
 | Ambientes, deploy, problemas conhecidos | `docs/operations/` |
 | Trabalho pendente | `docs/backlog.md` |
 | Design system, imagens, SEO (frontend) | `frontend/docs/` |
@@ -89,7 +92,17 @@ Siga a política completa em `docs/engineering/standards/git-and-review-workflow
 | Casos e protocolo de captura para o livro | `docs/book/` |
 | Preferências de colaboração com Marcelo | `memory/` |
 
-## 11. Captura de aprendizado para o livro
+## 11. Protocolo de debate Claude↔Codex
+
+Aplica-se **obrigatoriamente** a decisões nível 5-6 de `docs/engineering/standards/change-risk-scale.md` (contrato/schema, fronteira de módulo, política de segurança, decisão arquitetural formal). **Não é obrigatório** para correção mecânica, documentação factual, refactors locais reversíveis, lint/teste, ou implementação direta de decisão já aprovada (níveis 1-4) — usar a escala de risco para calibrar, não julgamento ad-hoc repetido.
+
+Quando aplicável: mínimo 3 rodadas (proposta independente → crítica cruzada → convergência), nota mínima 9.0 de ambos os lados antes de considerar concluído, sem arredondar. Protocolo de nota cega: o avaliador que responde depois não vê a nota do primeiro até ambos existirem registrados; desacordo abaixo de 9.0 reabre rodada em vez de arredondar ou fazer média. Critérios de nota por eixo: `docs/engineering/standards/joint-review-criteria.md`. O protocolo é dispensável sob as três condições de `docs/engineering/standards/ai-governance.md` §2 — nunca por omissão silenciosa.
+
+Invocação do Codex: `codex exec --skip-git-repo-check "<prompt>"`, rodar em background. Mesma restrição de "uma operação por chamada" do §7 vale aqui — nunca combinar `- < arquivo.txt` com backgrounding (`&`), e nunca usar crase (`` ` ``) dentro de um prompt passado por Bash com aspas duplas (o shell interpreta como substituição de comando e corrompe a entrada silenciosamente). Para prompt com crase/markdown, escrever em arquivo e usar `codex exec --skip-git-repo-check - < arquivo.txt` em primeiro plano. Rate limit do Codex: não bloquear a sessão esperando — registrar a rodada pendente, seguir para outra frente de trabalho, reagendar com `ScheduleWakeup`.
+
+Matriz de autoridade por agente e registro de incidentes: `docs/engineering/standards/ai-governance.md`.
+
+## 12. Captura de aprendizado para o livro
 
 Este projeto também funciona como laboratório sobre engenharia de software assistida por IA. A entrega e a qualidade do produto continuam sendo a prioridade; a captura é complementar e nunca deve prejudicar entrega, segurança, qualidade ou clareza do trabalho principal.
 
@@ -105,11 +118,11 @@ A skill também pode ser acionada manualmente por `/engineering-book-capture`, p
 
 As regras detalhadas estão em `docs/book/capture-protocol.md` e `.claude/skills/engineering-book-capture/SKILL.md`; a estrutura canônica de um caso está em `docs/book/cases/templates/case-template.md`. Os estudos de caso em `docs/book/cases/` são registros históricos, não estado operacional atual, e nunca devem ser duplicados integralmente em `.project-context.md`, `memory/` ou `docs/backlog.md`.
 
-## 12. Auditoria de consistência do projeto
+## 13. Auditoria de consistência do projeto
 
 Após mudanças estruturais em documentação, contexto, arquitetura ou governança, avalie a execução de `project-consistency-audit`. Não execute auditoria completa em tarefas rotineiras. Metodologia e modos: `docs/engineering/audits/project-consistency-audit.md`.
 
-## 13. Regra de manutenção do CLAUDE.md
+## 14. Regra de manutenção do CLAUDE.md
 
 O `CLAUDE.md` contém somente regras duráveis que alteram o comportamento da IA em várias sessões futuras.
 

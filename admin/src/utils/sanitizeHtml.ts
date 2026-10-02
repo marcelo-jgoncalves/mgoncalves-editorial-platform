@@ -23,6 +23,18 @@ const ALLOWED_ATTR = [
   'colspan','rowspan', // th, td
 ]
 
+// Matches backend/src/common/sanitizer.ts's ALLOWED_SCHEMES exactly. Without
+// this, DOMPurify falls back to its own default URI regex, which is more
+// permissive (also allows tel:/sms:/cid:/xmpp:) than the backend - found
+// during the Block 6 full audit (docs/book/cases/CASE-008) while verifying
+// the header comment's "must be identical" claim directly instead of
+// trusting it. Low severity in practice: this sanitizer only feeds the local
+// preview overlay (PostPreviewOverlay.vue) - the backend's own sanitizePostHtml()
+// is the real, authoritative pass applied before anything is persisted or
+// served to a real visitor - but the preview should still reflect the same
+// rules, not a looser approximation of them.
+const ALLOWED_URI_REGEXP = /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i
+
 export function sanitizeHtml(html: string): string {
-  return DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR })
+  return DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR, ALLOWED_URI_REGEXP })
 }
